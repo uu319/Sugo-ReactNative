@@ -1,4 +1,3 @@
-import React from 'react';
 import { createStackNavigator, createAppContainer } from 'react-navigation';
 import Login from '../screens/LoginScreen';
 import TabNavigator from './TabNav';

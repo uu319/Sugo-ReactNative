@@ -54,21 +54,31 @@ class Login extends Component {
         console.log('this is the user', result.user);
         const { email, id, familyName, givenName, name, photoUrl } = result.user;
         const database = firebase.database();
-        database
-          .ref(`users/${id}`)
-          .set({
-            email,
-            familyName,
-            givenName,
-            name,
-            photoUrl,
-          })
-          .then(
+        database.ref(`users/${id}`).once('value', snapshot => {
+          if (snapshot.exists()) {
             this.storeUser(result.user)
               .then(navigate('TabNavigator'))
-              .catch(err => console.log(err)),
-          )
-          .catch(error => Alert.alert(error));
+              .catch(err => console.log(err));
+          } else {
+            database
+              .ref(`users/${id}`)
+              .set({
+                email,
+                familyName,
+                givenName,
+                name,
+                photoUrl,
+                currentPost: '',
+                currentPostStatus: 'none123',
+              })
+              .then(
+                this.storeUser(result.user)
+                  .then(navigate('TabNavigator'))
+                  .catch(err => console.log(err)),
+              )
+              .catch(error => Alert.alert(error));
+          }
+        });
       } else {
         this.setState({ loading: false });
         console.log('cancelled');

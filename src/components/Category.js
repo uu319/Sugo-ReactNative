@@ -4,20 +4,15 @@ import React, { Component } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 
 export default class Category extends Component {
-  onPress = () => {
-    const { navigationProps, name, imageUri } = this.props;
-    navigationProps.navigate('AddSugoScreen', { name, imageUri });
-  };
-
   render() {
-    const { imageUri, name } = this.props;
+    const { imageUri, name, onPress } = this.props;
     return (
       <TouchableOpacity
-        onPress={this.onPress}
+        onPress={onPress}
         style={{
-          height: 130,
-          width: 130,
-          marginLeft: 20,
+          height: 100,
+          width: 100,
+          marginRight: 20,
           borderWidth: 0.5,
           borderColor: '#dddddd',
         }}
