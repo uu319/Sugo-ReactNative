@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import {
   Text,
-  TouchableHighlight,
   TouchableOpacity,
   View,
-  Image,
   Dimensions,
   TextInput,
   StyleSheet,
@@ -12,9 +10,9 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Alert,
+  Platform,
+  AsyncStorage,
 } from 'react-native';
-import Modal from 'react-native-modal';
-import { Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
 import { Location, Permissions } from 'expo';
 import { MONTHARRAY } from '../components/constants/constants';
@@ -26,16 +24,10 @@ export default class MyModal extends Component {
     super(props);
     this.state = {
       desc: '',
-      isModalVisible: false,
+      price: '',
       loading: false,
+      editable: true,
     };
-  }
-
-  componentWillReceiveProps(newProps) {
-    const oldProps = this.props;
-    if (oldProps.isModalVisible !== newProps.isModalVisible) {
-      this.setState({ isModalVisible: newProps.isModalVisible });
-    }
   }
 
   getLatLongAsync = async () => {
@@ -61,8 +53,20 @@ export default class MyModal extends Component {
     return null;
   };
 
-  insertPost = (title, desc, lat, long, address) => {
-    const { id, name, email, photoUrl } = this.props;
+  storePostToLocalStorage = async postId => {
+    try {
+      await AsyncStorage.setItem('postId', postId);
+    } catch (error) {
+      this.setState({ loading: false });
+      Alert.alert('error on storeUserToFirebase');
+    }
+  };
+
+  insertPost = (price, desc, lat, long, address) => {
+    const { navigation } = this.props;
+    const params = navigation.getParam('params', 'none');
+    console.log('params', params);
+    const { id, name, email, photoUrl, catName } = params;
     const timeStamp = new Date().getTime();
     const monthIndex = new Date().getMonth();
     const date = new Date().getDate().toString();
@@ -70,27 +74,27 @@ export default class MyModal extends Component {
     const year = new Date().getFullYear();
     const dateToString = `${month} ${date}, ${year}`;
     const metadata = {
-      lat,
-      long,
       address,
       timeStamp,
       date: dateToString,
-      status: 'Pending',
+      status: 'pending',
+      title: catName,
+      desc,
+      price,
     };
     const seeker = {
       id,
       name,
       email,
       photoUrl,
+      lat,
+      long,
     };
     const insertData = {
       id: `${timeStamp}${id}`,
       metadata,
       seeker,
-      title,
-      desc,
       runner: 'none',
-      status: 'pending',
     };
     const postId = `${timeStamp}${id}`;
     const updates = {};
@@ -102,9 +106,10 @@ export default class MyModal extends Component {
       .ref()
       .update(updates)
       .then(() => {
-        this.setState({ desc: '' });
-        this.setState({ isModalVisible: false });
-        this.setState({ loading: false });
+        const { navigate } = navigation;
+        this.setState({ loading: false, editable: true, desc: '', price: '' });
+        this.storePostToLocalStorage(postId);
+        navigate('SeekerTabNavigator');
       })
       .catch(() =>
         Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
@@ -113,8 +118,8 @@ export default class MyModal extends Component {
       );
   };
 
-  onSubmitPost = (title, desc) => {
-    this.setState({ loading: true });
+  onSubmitPost = (price, desc) => {
+    this.setState({ loading: true, editable: false });
     this.getLatLongAsync()
       .then(loc => {
         const { longitude, latitude } = loc.coords;
@@ -123,85 +128,82 @@ export default class MyModal extends Component {
             const addIndex = add[0];
             const { city, street, country } = addIndex;
             const address = `${street}, ${city}, ${country}`;
-            this.insertPost(title, desc, latitude, longitude, address);
+            this.insertPost(price, desc, latitude, longitude, address);
           })
-          .catch(() =>
-            Alert.alert('Fetching location failed', 'Please try again', [{ text: 'OK' }], {
+          .catch(() => {
+            this.setState({ loading: false, editable: true });
+            Alert.alert('Fetching location failed', 'Pl', [{ text: 'OK' }], {
               cancelable: false,
-            }),
-          );
+            });
+          });
       })
-      .catch(() =>
-        Alert.alert('Fetching location failed', 'Please try again', [{ text: 'OK' }], {
+      .catch(() => {
+        this.setState({ loading: false, editable: true });
+        Alert.alert('Fetching location failed', 'Pl', [{ text: 'OK' }], {
           cancelable: false,
-        }),
-      );
+        });
+      });
   };
 
   renderButton() {
     const { loading } = this.state;
-    const { desc } = this.state;
-    const { catName } = this.props;
+    const { price, desc } = this.state;
     const { btnSubmitStyle } = styles;
     return loading ? (
       <View style={btnSubmitStyle}>
         <Spinner size="small" />
       </View>
     ) : (
-      <TouchableOpacity onPress={() => this.onSubmitPost(catName, desc)} style={btnSubmitStyle}>
+      <TouchableOpacity onPress={() => this.onSubmitPost(price, desc)} style={btnSubmitStyle}>
         <Text>Submit</Text>
       </TouchableOpacity>
     );
   }
 
-  renderCloseButton() {
-    const { loading } = this.state;
-    const { modalClose } = this.props;
-    return loading ? null : (
-      <TouchableHighlight
-        style={{ position: 'absolute', right: 8, top: 8, elevation: 2 }}
-        onPress={modalClose}
-      >
-        <Ionicons name="md-close-circle-outline" size={28} color="black" />
-      </TouchableHighlight>
-    );
-  }
-  // onBackdropPress={modalClose}
-
   render() {
-    const { desc, isModalVisible } = this.state;
-    const { container, img, inputContainer, descInputStyle } = styles;
-    const { catName, imageUri } = this.props;
+    const { desc, price, editable } = this.state;
+    const { container, descInputContainer, inputStyle, priceInputContainer } = styles;
+    const { navigation } = this.props;
+    const params = navigation.getParam('params', 'none');
+    const { catName } = params;
     return (
-      <Modal isVisible={isModalVisible} style={{ margin: 0 }}>
-        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()} style={{ flex: 1 }}>
-          <View style={container}>
-            <View
-              style={{
-                flex: 1,
-              }}
-            >
-              <Image source={imageUri} style={img} />
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()} style={{ flex: 1 }}>
+        <View style={container}>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : ''}
+            enabled
+          >
+            <Text style={{ fontSize: 30, color: 'gray', alignSelf: 'center' }}>{catName}</Text>
+            <View style={priceInputContainer}>
+              <TextInput
+                keyboardType="numeric"
+                style={inputStyle}
+                multiline
+                editable={editable}
+                numberOfLines={1}
+                placeholder="How much are you paying for the service?"
+                underlineColorAndroid="transparent"
+                onChangeText={priceInput => this.setState({ price: priceInput })}
+                value={price}
+              />
             </View>
-            {this.renderCloseButton()}
-            <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" enabled>
-              <View style={inputContainer}>
-                <Text style={{ fontSize: 30, color: 'gray' }}>{catName}</Text>
-                <TextInput
-                  style={descInputStyle}
-                  multiline
-                  numberOfLines={1}
-                  placeholder="Description"
-                  underlineColorAndroid="transparent"
-                  onChangeText={description => this.setState({ desc: description })}
-                  value={desc}
-                />
-              </View>
-              {this.renderButton()}
-            </KeyboardAvoidingView>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+            <View style={descInputContainer}>
+              <TextInput
+                style={inputStyle}
+                multiline
+                editable={editable}
+                numberOfLines={1}
+                placeholder="Description"
+                underlineColorAndroid="transparent"
+                onChangeText={description => this.setState({ desc: description })}
+                value={desc}
+              />
+            </View>
+            {this.renderButton()}
+          </KeyboardAvoidingView>
+        </View>
+      </TouchableWithoutFeedback>
     );
   }
 }
@@ -209,11 +211,7 @@ export default class MyModal extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#dddddd',
-    marginTop: 60,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: 'hidden',
+    margin: 10,
   },
   img: {
     flex: 1,
@@ -223,19 +221,28 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
-  inputContainer: {
+  descInputContainer: {
     backgroundColor: 'white',
     borderColor: 'gray',
     borderWidth: 0.5,
-    margin: 10,
     borderRadius: 4,
     flex: 1,
     alignItems: 'center',
+    marginVertical: 10,
   },
-  descInputStyle: {
+  priceInputContainer: {
+    backgroundColor: 'white',
+    borderColor: 'gray',
+    borderWidth: 0.5,
+    borderRadius: 4,
+    height: 50,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  inputStyle: {
     flex: 1,
-    width: width - 20,
     padding: 6,
+    width: width - 20,
     textAlignVertical: 'top',
     fontSize: 20,
   },

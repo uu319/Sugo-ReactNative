@@ -2,6 +2,7 @@
 
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, AsyncStorage, Image } from 'react-native';
+import * as firebase from 'firebase';
 import { Button } from '../components/common';
 import { LOGO_URL, GLOBAL_STYLES } from '../constants/constants';
 
@@ -12,34 +13,51 @@ export default class Profile extends Component {
       email: '',
       photoUrl: '',
       name: '',
+      id: '',
+      postId: '',
     };
   }
 
   componentWillMount() {
-    this.retrieveUserAsync()
-      .then(user => {
-        console.log('the user in async', user);
-        const { email, photoUrl, name } = user;
-        this.setState({ email, photoUrl, name });
-      })
-      .catch(console.log('error'));
+    this.retrieveUserAsync();
+    this.retrievePostAsync();
   }
 
   retrieveUserAsync = async () => {
     try {
       const user = await AsyncStorage.getItem('user');
       const parsedUser = JSON.parse(user);
-      return parsedUser;
+      const { email, photoUrl, name, id } = parsedUser;
+      this.setState({ email, photoUrl, name, id });
     } catch (error) {
       console.log('error on user');
     }
-    return null;
   };
+
+  retrievePostAsync = async () => {
+    try {
+      const postId = await AsyncStorage.getItem('postId');
+      this.setState({ postId });
+    } catch (error) {
+      console.log('error on user');
+    }
+  };
+
+  // stop all listener before logout
 
   logout = async () => {
     const { navigation } = this.props;
     const { navigate } = navigation;
+    const { id, postId } = this.state;
     try {
+      await firebase
+        .database()
+        .ref(`posts/${postId}`)
+        .off();
+      await firebase
+        .database()
+        .ref(`users/${id}`)
+        .off();
       await AsyncStorage.clear();
       navigate('LoginScreen');
     } catch (err) {

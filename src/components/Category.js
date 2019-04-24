@@ -10,11 +10,15 @@ export default class Category extends Component {
       <TouchableOpacity
         onPress={onPress}
         style={{
-          height: 100,
-          width: 100,
-          marginRight: 20,
-          borderWidth: 0.5,
+          flex: 1,
+          marginHorizontal: 3,
+          marginVertical: 10,
+          borderWidth: 0.3,
           borderColor: '#dddddd',
+          elevation: 3,
+          shadowColor: 'gray',
+          shadowOffset: { width: 1, height: 1 },
+          shadowOpacity: 0.5,
         }}
       >
         <View style={{ flex: 2 }}>
@@ -23,8 +27,16 @@ export default class Category extends Component {
             style={{ flex: 1, width: null, height: null, resizeMode: 'cover' }}
           />
         </View>
-        <View style={{ flex: 1, paddingLeft: 10, paddingTop: 10 }}>
+        <View
+          style={{
+            height: 48,
+            paddingLeft: 10,
+            justifyContent: 'flex-end',
+            marginBottom: 10,
+          }}
+        >
           <Text>{name}</Text>
+          <Text>₱100.00</Text>
         </View>
       </TouchableOpacity>
     );

@@ -1,8 +1,8 @@
 import { createStackNavigator, createAppContainer } from 'react-navigation';
-import Login from '../screens/LoginScreen';
-import TabNavigator from './TabNav';
-import AddSugo from '../screens/AddSugoScreen';
-import ViewSugo from '../screens/ViewSugoScreen';
+import Login from '../ScreenMutual/LoginScreen';
+import SeekerTabNavigator from './SeekerTabNav';
+import RunnerTabNavigator from './RunnerTabNav';
+import AddPostScreen from '../ScreenSeeker/AddPostScreen';
 
 const MainStackNavigator = createAppContainer(
   createStackNavigator(
@@ -13,40 +13,56 @@ const MainStackNavigator = createAppContainer(
           header: null,
         },
       },
-      TabNavigator: {
-        screen: TabNavigator,
+      SeekerTabNavigator: {
+        screen: SeekerTabNavigator,
         navigationOptions: {
           header: null,
         },
       },
-      ViewSugoScreen: {
-        screen: ViewSugo,
+      RunnerTabNavigator: {
+        screen: RunnerTabNavigator,
+        navigationOptions: {
+          header: null,
+        },
+      },
+      AddPostScreen: {
+        screen: AddPostScreen,
         navigationOptions: {
           headerStyle: {
             borderBottomColor: 'white',
             borderBottomWidth: 0,
             shadowOffset: { height: 0, width: 0 },
-            elevation: 0,
-            shadowRadius: 0,
-            shadowOpacity: 0,
-            backgroundColor: 'transparent',
           },
         },
       },
-      AddSugoScreen: {
-        screen: AddSugo,
-        navigationOptions: {
-          headerStyle: {
-            borderBottomColor: 'white',
-            borderBottomWidth: 0,
-            shadowOffset: { height: 0, width: 0 },
-            elevation: 0,
-            shadowRadius: 0,
-            shadowOpacity: 0,
-            backgroundColor: 'transparent',
-          },
-        },
-      },
+      // ViewSugoScreen: {
+      //   screen: ViewSugo,
+      //   navigationOptions: {
+      //     headerStyle: {
+      //       borderBottomColor: 'white',
+      //       borderBottomWidth: 0,
+      //       shadowOffset: { height: 0, width: 0 },
+      //       elevation: 0,
+      //       shadowRadius: 0,
+      //       shadowOpacity: 0,
+      //       backgroundColor: 'transparent',
+      //     },
+      //   },
+      // },
+      // AddSugoScreen: {
+      //   screen: AddSugo,
+      //   navigationOptions: {
+      //     headerStyle: {
+      //       borderBottomColor: 'white',
+      //       borderBottomWidth: 0,
+      //       shadowOffset: { height: 0, width: 0 },
+      //       elevation: 0,
+      //       shadowRadius: 0,
+      //       shadowOpacity: 0,
+      //       backgroundColor: 'transparent',
+      //     },
+      //   },
+      // },
     },
     {
       navigationOptions: {

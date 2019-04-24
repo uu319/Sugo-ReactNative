@@ -1,10 +1,17 @@
-export const config = {
+export const firebaseConfig = {
   apiKey: 'AIzaSyAh5Xa9P-6vpzMMML1Y-55Pt71M8cfED8I',
   authDomain: 'sugoph-11fb0.firebaseapp.com',
   databaseURL: 'https://sugoph-11fb0.firebaseio.com',
   projectId: 'sugoph-11fb0',
   storageBucket: 'sugoph-11fb0.appspot.com',
   messagingSenderId: '93206224262',
+};
+
+export const googleSigninConfig = {
+  behavior: 'web',
+  androidClientId: '544798728580-fajrupu1o0rnf3g94d2dvpo30g4qgv82.apps.googleusercontent.com',
+  iosClientId: '544798728580-5hqsqqrnsogmef7j99b5jubcgb0m1d24.apps.googleusercontent.com',
+  scopes: ['profile', 'email'],
 };
 
 export const GLOBAL_STYLES = {

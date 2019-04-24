@@ -1,11 +1,11 @@
 import React from 'react';
 import { createAppContainer, createBottomTabNavigator } from 'react-navigation';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import Sugo from '../screens/SugoScreen';
-import About from '../screens/AboutScreen';
-import Profile from '../screens/ProfileScreen';
+import Sugo from '../ScreenSeeker/SugoScreen';
+import About from '../ScreenMutual/AboutScreen';
+import Profile from '../ScreenMutual/ProfileScreen';
 
-const TabNavigator = createAppContainer(
+const SeekerTabNavigator = createAppContainer(
   createBottomTabNavigator(
     {
       Sugo: {
@@ -50,4 +50,4 @@ const TabNavigator = createAppContainer(
     },
   ),
 );
-export default TabNavigator;
+export default SeekerTabNavigator;
