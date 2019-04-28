@@ -1,35 +1,57 @@
-import React, { Component } from 'react';
-import { View, SafeAreaView, Platform, AsyncStorage, Image, StyleSheet } from 'react-native';
-import * as firebase from 'firebase';
-import { getStatusBarHeight } from 'react-native-status-bar-height';
-import PendingPost from '../components/SeekerPendingPost';
-import AcceptedPost from '../components/SeekerAcceptedPost';
-import Categories from '../components/Categories';
-import Loading from '../components/Loading';
+/* @flow */
 
-export default class Sugo extends Component {
+import React, { Component } from 'react';
+import { StyleSheet, FlatList, SafeAreaView, Image, View, AsyncStorage } from 'react-native';
+import * as firebase from 'firebase';
+import _ from 'lodash';
+import { getStatusBarHeight } from 'react-native-status-bar-height';
+import SugoList from '../components/RunnerSugoItem';
+import Loading from '../components/Loading';
+import CurrentSugo from '../components/RunnerCurrentSugo';
+
+export default class RunnerSugoScreen extends Component {
   constructor(props) {
     super(props);
     this.database = firebase.database();
     this.state = {
+      posts: [],
       userInfo: '',
       currentPostStatus: 'loading',
       currentPost: null,
     };
   }
 
-  componentWillMount() {
-    this.startHeaderHeight = 90;
-    if (Platform.OS === 'android') {
-      this.startHeaderHeight = getStatusBarHeight() + 70;
-    }
-  }
-
   componentDidMount() {
+    this.listenPosts();
     this.listenUser();
   }
 
-  // post listener
+  listenPosts = () => {
+    this.database
+      .ref(`posts`)
+      .orderByChild('metadata/status')
+      .equalTo('pending')
+      .on('value', posts => {
+        const postArray = _.values(posts.val());
+        console.log('postsArray', postArray);
+        this.setState({ posts: postArray });
+      });
+  };
+
+  listenUser = async () => {
+    const user = await AsyncStorage.getItem('user');
+    const parsedUser = JSON.parse(user);
+    const { id } = parsedUser;
+    this.database.ref(`users/${id}`).on('value', async snapshot => {
+      const userInfo = snapshot.val();
+      const { currentPostStatus, currentPost } = userInfo;
+      this.setState({ userInfo, currentPostStatus });
+      if (currentPostStatus === 'accepted') {
+        await AsyncStorage.setItem('currentPost', currentPost);
+        this.listenPost(currentPost);
+      }
+    });
+  };
 
   listenPost = currentPost => {
     this.database.ref(`posts/${currentPost}`).on('value', post => {
@@ -37,41 +59,22 @@ export default class Sugo extends Component {
     });
   };
 
-  // user listener watch post if user status if accepted
-  // store post id in local storage when user status is accepted
-
-  listenUser = async () => {
-    const user = await AsyncStorage.getItem('user');
-    const parsedUser = JSON.parse(user);
-    const { id } = parsedUser;
-    this.database.ref(`users/${id}`).on('value', async snapshot => {
-      const { currentPostStatus, currentPost } = snapshot.val();
-      this.setState({ userInfo: snapshot.val(), id, currentPostStatus });
-      if (currentPostStatus === 'accepted') {
-        await AsyncStorage.setItem('postId', currentPost);
-        this.listenPost(currentPost);
-      }
-    });
+  renderSugoList = post => {
+    const { userInfo } = this.state;
+    return <SugoList post={post.item} userInfo={userInfo} />;
   };
 
-  // retrieve user id and then listen to it
-
-  onCatPress = catName => {
-    const { imageUri, userInfo, id } = this.state;
-    const { name, email, photoUrl } = userInfo;
+  renderFlatList = () => {
+    const { posts } = this.state;
     const { navigation } = this.props;
-    const { navigate } = navigation;
-    const params = {
-      id,
-      photoUrl,
-      name,
-      email,
-      imageUri,
-      catName,
-    };
-    navigate('AddPostScreen', {
-      params,
-    });
+    return (
+      <FlatList
+        data={posts}
+        renderItem={this.renderSugoList}
+        navProp={navigation}
+        keyExtractor={item => item.postId}
+      />
+    );
   };
 
   renderBody = () => {
@@ -81,12 +84,9 @@ export default class Sugo extends Component {
       return <Loading />;
     }
     if (currentPostStatus === 'none') {
-      return <Categories onCatPress={this.onCatPress} />;
+      return this.renderFlatList();
     }
-    if (currentPostStatus === 'pending') {
-      return <PendingPost />;
-    }
-    return <AcceptedPost post={currentPost} navProp={navigation} />;
+    return <CurrentSugo navProp={navigation} post={currentPost} />;
   };
 
   render() {

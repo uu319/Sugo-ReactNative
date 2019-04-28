@@ -4,31 +4,98 @@ import {
   TouchableOpacity,
   View,
   Dimensions,
-  TextInput,
   StyleSheet,
-  KeyboardAvoidingView,
-  Keyboard,
-  TouchableWithoutFeedback,
   Alert,
-  Platform,
   AsyncStorage,
 } from 'react-native';
+import t from 'tcomb-form-native';
 import * as firebase from 'firebase';
 import { Location, Permissions } from 'expo';
-import { MONTHARRAY } from '../components/constants/constants';
+import { MONTHARRAY, GLOBAL_STYLES } from '../components/constants/constants';
 import { Spinner } from '../components/common/Spinner';
 
 const { width } = Dimensions.get('window');
+const { Form } = t.form;
+
+const Price = t.refinement(t.Number, n => {
+  return n >= 100;
+});
+const Post = t.struct({
+  Price,
+  Description: t.String,
+});
+const formStyles = {
+  ...Form.stylesheet,
+  formGroup: {
+    normal: {
+      marginBottom: 10,
+    },
+  },
+  controlLabel: {
+    normal: {
+      color: GLOBAL_STYLES.BRAND_COLOR,
+      fontSize: 21,
+      marginBottom: 7,
+      fontWeight: '600',
+    },
+    // the style applied when a validation error occours
+    error: {
+      color: GLOBAL_STYLES.BRAND_COLOR,
+      fontSize: 18,
+      marginBottom: 7,
+      fontWeight: '600',
+    },
+  },
+};
+
+const options = {
+  fields: {
+    Price: {
+      autoFocus: true,
+      label: 'Price (Minimum of 100 pesos)',
+      error: 'Service fee should not be lower than 100 pesos.',
+      // editable: this.state.editable,
+    },
+    Description: {
+      multiline: true,
+      stylesheet: {
+        ...formStyles,
+        error: {
+          color: 'red',
+          fontSize: 18,
+          marginBottom: 7,
+          fontWeight: '600',
+        },
+        textbox: {
+          ...Form.stylesheet.textbox,
+          normal: {
+            ...Form.stylesheet.textbox.normal,
+            height: 100,
+            textAlignVertical: 'top',
+            padding: 5,
+          },
+        },
+      },
+      numberOfLines: 5,
+      textAlignVertical: 'top',
+      error: 'Please describe your sugo.',
+    },
+  },
+  stylesheet: formStyles,
+};
 export default class MyModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      desc: '',
-      price: '',
+      value: '',
       loading: false,
-      editable: true,
     };
   }
+
+  handleSubmit = () => {
+    const value = this._form.getValue();
+    console.log('value: ', value);
+  };
 
   getLatLongAsync = async () => {
     const { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -83,15 +150,16 @@ export default class MyModal extends Component {
       price,
     };
     const seeker = {
-      id,
+      seekerId: id,
       name,
       email,
       photoUrl,
       lat,
       long,
+      withMessage: 'false',
     };
     const insertData = {
-      id: `${timeStamp}${id}`,
+      postId: `${timeStamp}${id}`,
       metadata,
       seeker,
       runner: 'none',
@@ -107,7 +175,7 @@ export default class MyModal extends Component {
       .update(updates)
       .then(() => {
         const { navigate } = navigation;
-        this.setState({ loading: false, editable: true, desc: '', price: '' });
+        this.setState({ loading: false });
         this.storePostToLocalStorage(postId);
         navigate('SeekerTabNavigator');
       })
@@ -118,100 +186,91 @@ export default class MyModal extends Component {
       );
   };
 
-  onSubmitPost = (price, desc) => {
-    this.setState({ loading: true, editable: false });
-    this.getLatLongAsync()
-      .then(loc => {
-        const { longitude, latitude } = loc.coords;
-        this.getAddressByLatLong(longitude, latitude)
-          .then(add => {
-            const addIndex = add[0];
-            const { city, street, country } = addIndex;
-            const address = `${street}, ${city}, ${country}`;
-            this.insertPost(price, desc, latitude, longitude, address);
-          })
-          .catch(() => {
-            this.setState({ loading: false, editable: true });
-            Alert.alert('Fetching location failed', 'Pl', [{ text: 'OK' }], {
-              cancelable: false,
+  onSubmitPost = () => {
+    const value = this._form.getValue(); // use that ref to get the form value
+    if (value) {
+      this.setState({ loading: true });
+      const desc = value.Description;
+      const price = value.Price;
+      this.getLatLongAsync()
+        .then(loc => {
+          const { longitude, latitude } = loc.coords;
+          this.getAddressByLatLong(longitude, latitude)
+            .then(add => {
+              const addIndex = add[0];
+              const { city, street, country } = addIndex;
+              const address = `${street}, ${city}, ${country}`;
+              this.insertPost(price, desc, latitude, longitude, address);
+            })
+            .catch(() => {
+              this.setState({ loading: false });
+              Alert.alert(
+                'Fetching location failed',
+                'Please try to turn on your GPS',
+                [{ text: 'OK' }],
+                {
+                  cancelable: false,
+                },
+              );
             });
-          });
-      })
-      .catch(() => {
-        this.setState({ loading: false, editable: true });
-        Alert.alert('Fetching location failed', 'Pl', [{ text: 'OK' }], {
-          cancelable: false,
+        })
+        .catch(() => {
+          this.setState({ loading: false });
+          Alert.alert(
+            'Fetching location failed',
+            'Please try to turn on your GPS',
+            [{ text: 'OK' }],
+            {
+              cancelable: false,
+            },
+          );
         });
-      });
+    }
   };
 
   renderButton() {
     const { loading } = this.state;
-    const { price, desc } = this.state;
     const { btnSubmitStyle } = styles;
     return loading ? (
-      <View style={btnSubmitStyle}>
-        <Spinner size="small" />
-      </View>
+      <Spinner size="small" />
     ) : (
-      <TouchableOpacity onPress={() => this.onSubmitPost(price, desc)} style={btnSubmitStyle}>
-        <Text>Submit</Text>
+      <TouchableOpacity onPress={this.onSubmitPost} style={btnSubmitStyle}>
+        <Text style={{ color: 'white', fontSize: 20 }}>Submit</Text>
       </TouchableOpacity>
     );
   }
 
   render() {
-    const { desc, price, editable } = this.state;
-    const { container, descInputContainer, inputStyle, priceInputContainer } = styles;
+    const { value } = this.state;
+    const { container } = styles;
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
     const { catName } = params;
     return (
-      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()} style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 30, color: 'gray', alignSelf: 'center' }}>{catName}</Text>
         <View style={container}>
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : ''}
-            enabled
-          >
-            <Text style={{ fontSize: 30, color: 'gray', alignSelf: 'center' }}>{catName}</Text>
-            <View style={priceInputContainer}>
-              <TextInput
-                keyboardType="numeric"
-                style={inputStyle}
-                multiline
-                editable={editable}
-                numberOfLines={1}
-                placeholder="How much are you paying for the service?"
-                underlineColorAndroid="transparent"
-                onChangeText={priceInput => this.setState({ price: priceInput })}
-                value={price}
-              />
-            </View>
-            <View style={descInputContainer}>
-              <TextInput
-                style={inputStyle}
-                multiline
-                editable={editable}
-                numberOfLines={1}
-                placeholder="Description"
-                underlineColorAndroid="transparent"
-                onChangeText={description => this.setState({ desc: description })}
-                value={desc}
-              />
-            </View>
-            {this.renderButton()}
-          </KeyboardAvoidingView>
+          <Form
+            ref={c => {
+              this._form = c;
+            }}
+            type={Post}
+            options={options}
+            value={value}
+            onChange={val => this.setState({ value: val })}
+          />
+          {this.renderButton()}
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    margin: 10,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#ffffff',
   },
   img: {
     flex: 1,
@@ -247,13 +306,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   btnSubmitStyle: {
-    backgroundColor: 'white',
+    backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
     height: 40,
-    marginHorizontal: 10,
+    width: '30%',
     marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 4,
+    alignSelf: 'center',
   },
   sendControlContainerOuter: {
     flex: 1,

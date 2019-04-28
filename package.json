@@ -16,7 +16,9 @@
     "react-native-modal": "^9.0.0",
     "react-native-modalbox": "^1.7.1",
     "react-native-status-bar-height": "^2.3.1",
-    "react-navigation": "^3.7.1"
+    "react-navigation": "^3.7.1",
+    "react-timer-mixin": "^0.13.4",
+    "tcomb-form-native": "^0.6.20"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",

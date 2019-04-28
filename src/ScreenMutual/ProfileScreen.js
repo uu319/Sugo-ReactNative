@@ -10,34 +10,24 @@ export default class Profile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: '',
-      photoUrl: '',
-      name: '',
       id: '',
       postId: '',
+      email: '',
+      photoUrl: '',
     };
   }
 
   componentWillMount() {
-    this.retrieveUserAsync();
-    this.retrievePostAsync();
+    this.retrieveInfoAsync();
   }
 
-  retrieveUserAsync = async () => {
+  retrieveInfoAsync = async () => {
     try {
       const user = await AsyncStorage.getItem('user');
       const parsedUser = JSON.parse(user);
-      const { email, photoUrl, name, id } = parsedUser;
-      this.setState({ email, photoUrl, name, id });
-    } catch (error) {
-      console.log('error on user');
-    }
-  };
-
-  retrievePostAsync = async () => {
-    try {
-      const postId = await AsyncStorage.getItem('postId');
-      this.setState({ postId });
+      const { id, email, photoUrl } = parsedUser;
+      const postId = await AsyncStorage.getItem('currentPost');
+      this.setState({ postId, id, email, photoUrl });
     } catch (error) {
       console.log('error on user');
     }
@@ -52,6 +42,10 @@ export default class Profile extends Component {
     try {
       await firebase
         .database()
+        .ref(`messages/${postId}`)
+        .off();
+      await firebase
+        .database()
         .ref(`posts/${postId}`)
         .off();
       await firebase
@@ -59,7 +53,7 @@ export default class Profile extends Component {
         .ref(`users/${id}`)
         .off();
       await AsyncStorage.clear();
-      navigate('LoginScreen');
+      navigate('AuthLoading');
     } catch (err) {
       console.log(`The error is: ${err}`);
     }

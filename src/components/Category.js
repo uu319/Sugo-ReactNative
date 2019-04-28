@@ -11,20 +11,28 @@ export default class Category extends Component {
         onPress={onPress}
         style={{
           flex: 1,
-          marginHorizontal: 3,
+          marginHorizontal: 6,
           marginVertical: 10,
           borderWidth: 0.3,
-          borderColor: '#dddddd',
+          borderColor: 'black',
           elevation: 3,
           shadowColor: 'gray',
-          shadowOffset: { width: 1, height: 1 },
+          shadowOffset: { width: 3, height: 3 },
           shadowOpacity: 0.5,
+          borderRadius: 10,
+          overflow: 'hidden',
         }}
       >
         <View style={{ flex: 2 }}>
           <Image
             source={imageUri}
-            style={{ flex: 1, width: null, height: null, resizeMode: 'cover' }}
+            resizeMode="contain"
+            style={{
+              flex: 1,
+              width: null,
+              height: null,
+              backgroundColor: '#f39f33',
+            }}
           />
         </View>
         <View
@@ -33,6 +41,7 @@ export default class Category extends Component {
             paddingLeft: 10,
             justifyContent: 'flex-end',
             marginBottom: 10,
+            backgroundColor: 'white',
           }}
         >
           <Text>{name}</Text>

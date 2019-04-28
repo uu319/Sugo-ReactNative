@@ -1,22 +1,13 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableHighlight,
-  Alert,
-  TouchableOpacity,
-  AsyncStorage,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, Alert, TouchableOpacity, AsyncStorage } from 'react-native';
 import { MapView } from 'expo';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { Spinner } from './common/Spinner';
 import { GLOBAL_STYLES, LOGO_URL } from '../constants/constants';
-import MyModal from './Modal';
+import MyModal from './SeekerSugoDetailsModal';
+import Loading from './Loading';
 
 export default class AcceptedPost extends Component {
   constructor(props) {
@@ -31,13 +22,18 @@ export default class AcceptedPost extends Component {
     }
   }
 
+  // componentDidMount() {
+  //   const { post } = this.props;
+  //   this.setState({ post });
+  // }
+
   onCancelButton = () => {
     const { post } = this.state;
-    const { id, runner, seeker } = post;
+    const { postId, runner, seeker } = post;
     const runnerId = runner.id;
     const seekerId = seeker.id;
     const updates = {};
-    updates[`/posts/${id}/metadata/status`] = 'cancelled';
+    updates[`/posts/${postId}/metadata/status`] = 'cancelled';
     updates[`/users/${seekerId}/currentPost`] = '';
     updates[`/users/${seekerId}/currentPostStatus`] = 'none';
     updates[`/users/${runnerId}/currentPost`] = '';
@@ -56,7 +52,7 @@ export default class AcceptedPost extends Component {
                 .update(updates);
               await firebase
                 .database()
-                .ref(`posts/${id}`)
+                .ref(`posts/${postId}`)
                 .off();
               await AsyncStorage.removeItem('postId');
               this.setState({ post: '' });
@@ -85,18 +81,21 @@ export default class AcceptedPost extends Component {
 
   renderView() {
     const { post, isModalVisible } = this.state;
+    const { postId } = post;
+    const { navProp } = this.props;
     const {
       img,
       imgContainer,
       runnerProfileContainer,
-      runnerInfoContainer,
+      runnerNameContainer,
+      runnerEmailContainer,
       messageIconContainer,
       runnerRowContainer,
       btnSubmitStyle,
     } = styles;
 
     return post ? (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, marginHorizontal: 6 }}>
         <MyModal
           title={post.metadata.title}
           desc={post.metadata.desc}
@@ -122,16 +121,7 @@ export default class AcceptedPost extends Component {
           </MapView.Marker>
         </MapView>
         <View style={{ height: 40, flexDirection: 'row', marginVertical: 10 }}>
-          <TouchableOpacity
-            onPress={this.onCancelButton}
-            style={[btnSubmitStyle, { marginRight: 10, backgroundColor: 'red' }]}
-          >
-            <Text style={{ color: 'white' }}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={this.showModal}
-            style={[btnSubmitStyle, { marginLeft: 10, backgroundColor: 'green' }]}
-          >
+          <TouchableOpacity onPress={this.showModal} style={btnSubmitStyle}>
             <Text style={{ color: 'white' }}>View Sugo Details</Text>
           </TouchableOpacity>
         </View>
@@ -147,37 +137,53 @@ export default class AcceptedPost extends Component {
           <View style={{ flex: 2 }}>
             <View style={runnerRowContainer}>
               <View style={{ flex: 3 }}>
-                <View style={runnerInfoContainer}>
-                  <Text>{post.runner.name}</Text>
+                <View style={runnerNameContainer}>
+                  <Text style={{ fontSize: 20 }}>{post.runner.name}</Text>
                 </View>
-                <View style={runnerInfoContainer}>
+                <View style={runnerEmailContainer}>
                   <Text>{post.runner.email}</Text>
                 </View>
               </View>
               <View style={messageIconContainer}>
-                <AntDesign name="message1" size={32} color="gray" />
+                {this.renderMessageBadge()}
+                <AntDesign
+                  onPress={() => navProp.navigate('ChatApp', { postId })}
+                  name="message1"
+                  size={32}
+                  color="gray"
+                />
               </View>
             </View>
           </View>
         </View>
       </View>
     ) : (
-      <Spinner />
+      <Loading />
     );
   }
 
+  renderMessageBadge = () => {
+    const { post } = this.state;
+    const { seeker } = post;
+    const { withMessage } = seeker;
+    return withMessage === 'true' ? (
+      <View
+        style={{
+          height: 12,
+          width: 12,
+          borderRadius: 6,
+          backgroundColor: 'red',
+          position: 'absolute',
+          top: 15,
+          right: 20,
+          elevation: 2,
+        }}
+      />
+    ) : null;
+  };
+
   render() {
-    return (
-      <View style={{ flex: 1 }}>
-        <TouchableHighlight
-          style={{ position: 'absolute', right: 8, top: 8, elevation: 2 }}
-          onPress={this.onCancelButton}
-        >
-          <Ionicons name="md-close-circle-outline" size={28} color="black" />
-        </TouchableHighlight>
-        {this.renderView()}
-      </View>
-    );
+    return <View style={{ flex: 1 }}>{this.renderView()}</View>;
   }
 }
 
@@ -205,9 +211,15 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginHorizontal: 20,
   },
-  runnerInfoContainer: {
+  runnerNameContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 4,
+  },
+  runnerEmailContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    paddingTop: 4,
   },
   messageIconContainer: {
     flex: 1,
@@ -228,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   btnSubmitStyle: {
-    backgroundColor: 'red',
+    backgroundColor: 'green',
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',

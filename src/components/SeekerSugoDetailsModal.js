@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#dddddd',
-    marginTop: 200,
+    marginTop: 100,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   titleTextStyle: {
-    fontSize: 40,
+    fontSize: 30,
     alignSelf: 'center',
     marginBottom: 20,
   },

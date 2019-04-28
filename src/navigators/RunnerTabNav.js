@@ -1,7 +1,7 @@
 import React from 'react';
 import { createAppContainer, createBottomTabNavigator } from 'react-navigation';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import Screen1 from '../ScreenRunner/Screen1';
+import RunnerSugoScreen from '../ScreenRunner/RunnerSugoScreen';
 import About from '../ScreenMutual/AboutScreen';
 import Profile from '../ScreenMutual/ProfileScreen';
 
@@ -9,10 +9,10 @@ const RunnerTabNavigator = createAppContainer(
   createBottomTabNavigator(
     {
       Sugo: {
-        screen: Screen1,
+        screen: RunnerSugoScreen,
         navigationOptions: {
           tabBarLabel: 'SUGO',
-          tabBarIcon: ({ tintColor }) => <Ionicons name="ios-search" color={tintColor} size={24} />,
+          tabBarIcon: ({ tintColor }) => <Ionicons name="ios-search" color={tintColor} size={21} />,
         },
       },
       About: {
@@ -20,7 +20,7 @@ const RunnerTabNavigator = createAppContainer(
         navigationOptions: {
           tabBarLabel: 'ABOUT',
           tabBarIcon: ({ tintColor }) => (
-            <MaterialCommunityIcons name="information-outline" color={tintColor} size={24} />
+            <MaterialCommunityIcons name="information-outline" color={tintColor} size={21} />
           ),
         },
       },
@@ -29,15 +29,18 @@ const RunnerTabNavigator = createAppContainer(
         navigationOptions: {
           tabBarLabel: 'PROFILE',
           tabBarIcon: ({ tintColor }) => (
-            <MaterialIcons name="person-outline" color={tintColor} size={24} />
+            <MaterialIcons name="person-outline" color={tintColor} size={21} />
           ),
         },
       },
     },
     {
       tabBarOptions: {
-        activeTintColor: 'red',
+        activeTintColor: '#f39f33',
         inactiveTintColor: 'gray',
+        labelStyle: {
+          fontSize: 11,
+        },
         style: {
           backgroundColor: 'white',
           borderTopWidth: 0,
@@ -45,6 +48,7 @@ const RunnerTabNavigator = createAppContainer(
           shadowColor: 'black',
           shadowOpacity: 0.5,
           elevation: 5,
+          paddingVertical: 5,
         },
       },
     },

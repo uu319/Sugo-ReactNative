@@ -4,7 +4,7 @@ import { Google } from 'expo';
 import * as firebase from 'firebase';
 import _ from 'lodash';
 import { Button, Spinner } from '../components/common';
-import { GLOBAL_STYLES, LOGO_URL, googleSigninConfig } from '../components/constants/constants';
+import { googleSigninConfig } from '../components/constants/constants';
 
 class Login extends Component {
   constructor(props) {
@@ -14,28 +14,6 @@ class Login extends Component {
       loading: false,
     };
   }
-
-  componentDidMount() {
-    this.setState({ loading: true });
-    this.checkIfLoggedIn();
-  }
-
-  checkIfLoggedIn = async () => {
-    const { navigation } = this.props;
-    const { navigate } = navigation;
-    try {
-      const user = await AsyncStorage.getItem('user');
-      const parsedUser = JSON.parse(user);
-      const { email } = parsedUser;
-      this.checkIfRunner(email).then(response => {
-        const navigateTo = response ? 'RunnerTabNavigator' : 'SeekerTabNavigator';
-        this.setState({ loading: false });
-        navigate(navigateTo);
-      });
-    } catch (error) {
-      this.setState({ loading: false });
-    }
-  };
 
   checkIfRunner = async email => {
     const emails = [];
@@ -55,6 +33,7 @@ class Login extends Component {
     const { email, id, familyName, givenName, name, photoUrl } = user;
     try {
       await this.database.ref(`users/${id}`).set({
+        userId: id,
         email,
         familyName,
         givenName,
@@ -69,15 +48,11 @@ class Login extends Component {
   };
 
   storeUserToLocalStorage = async user => {
-    const { email } = user;
     const { navigation } = this.props;
     const { navigate } = navigation;
     try {
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      this.checkIfRunner(email).then(response => {
-        const navigateTo = response ? 'RunnerTabNavigator' : 'SeekerTabNavigator';
-        navigate(navigateTo);
-      });
+      navigate('TypeLoading');
     } catch (error) {
       this.setState({ loading: false });
       Alert.alert('error on storeUserToFirebase');
@@ -115,27 +90,20 @@ class Login extends Component {
         <View style={{ marginBottom: 10 }}>
           <Button onPress={this.signIn}>Login Via Google</Button>
         </View>
-        <Button
-          onPress={() => this.signIn}
-          buttonStyle={{ backgroundColor: GLOBAL_STYLES.BRAND_COLOR }}
-          textStyle={{ color: '#ffffff' }}
-        >
-          Login as admin
-        </Button>
       </View>
     );
   }
 
   render() {
     return (
-      <View style={{ marginTop: 100 }}>
-        <Image
-          source={{
-            uri: LOGO_URL,
-          }}
-          style={{ width: 200, height: 200, alignSelf: 'center' }}
-        />
-        <View style={{ height: 100 }} />
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <View style={{ width: 120, height: 120, alignSelf: 'center' }}>
+          <Image
+            resizeMode="contain"
+            source={require('../myassets/sugoLogoOrange.png')}
+            style={{ width: null, height: null, flex: 1 }}
+          />
+        </View>
         {this.renderButton()}
       </View>
     );
