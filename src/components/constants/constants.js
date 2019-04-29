@@ -21,7 +21,7 @@ export const googleSigninConfig = {
 };
 
 export const GLOBAL_STYLES = {
-  BRAND_COLOR: '#f3d352',
+  BRAND_COLOR: '#F39F33',
   SECONDARY_COLOR: '#e2be2d',
   DARK_GREY_COLOR: '#6C7A89',
   LIGHT_GREY_COLOR: '#B0B0B0',

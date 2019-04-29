@@ -152,6 +152,7 @@ export default class SugoList extends Component {
     const { timeStamp } = metadata;
     const newDate = new Date().getTime();
     const milliseconds = newDate - timeStamp;
+    this.getMomentAgo(milliseconds);
     this.countdownInterval = setInterval(() => {
       this.getMomentAgo(milliseconds);
     }, 10000);

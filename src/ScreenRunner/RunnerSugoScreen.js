@@ -1,7 +1,7 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { StyleSheet, FlatList, SafeAreaView, Image, View, AsyncStorage } from 'react-native';
+import { StyleSheet, FlatList, SafeAreaView, AsyncStorage } from 'react-native';
 import * as firebase from 'firebase';
 import _ from 'lodash';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
@@ -46,7 +46,11 @@ export default class RunnerSugoScreen extends Component {
       const userInfo = snapshot.val();
       const { currentPostStatus, currentPost } = userInfo;
       this.setState({ userInfo, currentPostStatus });
-      if (currentPostStatus === 'accepted') {
+      if (
+        currentPostStatus === 'accepted' ||
+        currentPostStatus === 'started' ||
+        currentPostStatus === 'done'
+      ) {
         await AsyncStorage.setItem('currentPost', currentPost);
         this.listenPost(currentPost);
       }
@@ -89,18 +93,16 @@ export default class RunnerSugoScreen extends Component {
     return <CurrentSugo navProp={navigation} post={currentPost} />;
   };
 
+  // const { container, headerContainer, headerImageContainer, headerImageStyle } = styles;
+  // <View style={headerContainer}>
+  //   <View style={headerImageContainer}>
+  //     <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
+  //   </View>
+  // </View>
+
   render() {
-    const { container, headerContainer, headerImageContainer, headerImageStyle } = styles;
-    return (
-      <SafeAreaView style={container}>
-        <View style={headerContainer}>
-          <View style={headerImageContainer}>
-            <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
-          </View>
-        </View>
-        {this.renderBody()}
-      </SafeAreaView>
-    );
+    const { container } = styles;
+    return <SafeAreaView style={container}>{this.renderBody()}</SafeAreaView>;
   }
 }
 

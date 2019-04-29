@@ -35,11 +35,7 @@ const AppStack = createAppContainer(
         screen: AddPostScreen,
         navigationOptions: {
           gesturesEnabled: false,
-          headerStyle: {
-            borderBottomColor: 'white',
-            borderBottomWidth: 0,
-            shadowOffset: { height: 0, width: 0 },
-          },
+          header: null,
         },
       },
       ChatApp: {

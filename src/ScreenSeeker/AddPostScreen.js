@@ -11,86 +11,105 @@ import {
 import t from 'tcomb-form-native';
 import * as firebase from 'firebase';
 import { Location, Permissions } from 'expo';
+import { Ionicons } from '@expo/vector-icons';
+import { getStatusBarHeight } from 'react-native-status-bar-height';
 import { MONTHARRAY, GLOBAL_STYLES } from '../components/constants/constants';
 import { Spinner } from '../components/common/Spinner';
 
 const { width } = Dimensions.get('window');
 const { Form } = t.form;
-
-const Price = t.refinement(t.Number, n => {
-  return n >= 100;
-});
+// const Price = t.refinement(t.Number, n => {
+//   return n >= 100;
+// });
 const Post = t.struct({
-  Price,
+  // Price,
   Description: t.String,
 });
-const formStyles = {
-  ...Form.stylesheet,
-  formGroup: {
-    normal: {
-      marginBottom: 10,
-    },
-  },
-  controlLabel: {
-    normal: {
-      color: GLOBAL_STYLES.BRAND_COLOR,
-      fontSize: 21,
-      marginBottom: 7,
-      fontWeight: '600',
-    },
-    // the style applied when a validation error occours
-    error: {
-      color: GLOBAL_STYLES.BRAND_COLOR,
-      fontSize: 18,
-      marginBottom: 7,
-      fontWeight: '600',
-    },
-  },
-};
 
-const options = {
-  fields: {
-    Price: {
-      autoFocus: true,
-      label: 'Price (Minimum of 100 pesos)',
-      error: 'Service fee should not be lower than 100 pesos.',
-      // editable: this.state.editable,
-    },
-    Description: {
-      multiline: true,
-      stylesheet: {
-        ...formStyles,
-        error: {
-          color: 'red',
-          fontSize: 18,
-          marginBottom: 7,
-          fontWeight: '600',
-        },
-        textbox: {
-          ...Form.stylesheet.textbox,
-          normal: {
-            ...Form.stylesheet.textbox.normal,
-            height: 100,
-            textAlignVertical: 'top',
-            padding: 5,
-          },
-        },
-      },
-      numberOfLines: 5,
-      textAlignVertical: 'top',
-      error: 'Please describe your sugo.',
-    },
-  },
-  stylesheet: formStyles,
-};
 export default class MyModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      value: '',
+      options: {},
+      value: {
+        Description: '',
+        // Price: '',
+      },
       loading: false,
     };
   }
+
+  componentDidMount() {
+    this.initializeForm();
+  }
+
+  initializeForm = () => {
+    const { loading } = this.state;
+    const editable = !loading;
+    console.log('editable', editable);
+    const formStyles = {
+      ...Form.stylesheet,
+      formGroup: {
+        normal: {
+          marginBottom: 10,
+        },
+      },
+      controlLabel: {
+        normal: {
+          color: GLOBAL_STYLES.BRAND_COLOR,
+          fontSize: 21,
+          marginBottom: 7,
+          fontWeight: '600',
+        },
+        // the style applied when a validation error occours
+        error: {
+          color: GLOBAL_STYLES.BRAND_COLOR,
+          fontSize: 18,
+          marginBottom: 7,
+          fontWeight: '600',
+        },
+      },
+    };
+
+    const options = {
+      fields: {
+        // Price: {
+        //   editable,
+        //   autoFocus: true,
+        //   label: 'Price (Minimum of 100 pesos)',
+        //   error: 'Service fee should not be lower than 100 pesos.',
+        //   // editable: this.state.editable,
+        // },
+        Description: {
+          editable,
+          multiline: true,
+          stylesheet: {
+            ...formStyles,
+            error: {
+              color: 'red',
+              fontSize: 18,
+              marginBottom: 7,
+              fontWeight: '600',
+            },
+            textbox: {
+              ...Form.stylesheet.textbox,
+              normal: {
+                ...Form.stylesheet.textbox.normal,
+                height: 100,
+                textAlignVertical: 'top',
+                padding: 5,
+              },
+            },
+          },
+          numberOfLines: 5,
+          textAlignVertical: 'top',
+          error: 'Please describe your sugo.',
+        },
+      },
+      stylesheet: formStyles,
+    };
+    this.setState({ options });
+  };
 
   handleSubmit = () => {
     const value = this._form.getValue();
@@ -129,7 +148,7 @@ export default class MyModal extends Component {
     }
   };
 
-  insertPost = (price, desc, lat, long, address) => {
+  insertPost = (desc, lat, long, address) => {
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
     console.log('params', params);
@@ -147,7 +166,9 @@ export default class MyModal extends Component {
       status: 'pending',
       title: catName,
       desc,
-      price,
+      price: 300,
+      timeStarted: '',
+      timeDone: '',
     };
     const seeker = {
       seekerId: uid,
@@ -191,7 +212,7 @@ export default class MyModal extends Component {
     if (value) {
       this.setState({ loading: true });
       const desc = value.Description;
-      const price = value.Price;
+      // const price = value.Price;
       this.getLatLongAsync()
         .then(loc => {
           const { longitude, latitude } = loc.coords;
@@ -200,7 +221,7 @@ export default class MyModal extends Component {
               const addIndex = add[0];
               const { city, street, country } = addIndex;
               const address = `${street}, ${city}, ${country}`;
-              this.insertPost(price, desc, latitude, longitude, address);
+              this.insertPost(desc, latitude, longitude, address);
             })
             .catch(() => {
               this.setState({ loading: false });
@@ -229,25 +250,50 @@ export default class MyModal extends Component {
   };
 
   renderButton() {
-    const { loading } = this.state;
+    const { loading, value } = this.state;
+    const price = value.Price;
+    const desc = value.Description;
+    console.log('pricedesc', `${price}${desc}`);
     const { btnSubmitStyle } = styles;
+    let disabled = true;
+    // const disabled = (price || desc) === '';
+    if (!(price === '' || desc === '')) {
+      disabled = false;
+    }
+
+    const backgroundColor = disabled ? 'gray' : GLOBAL_STYLES.BRAND_COLOR;
+    console.log('disabled', disabled);
     return loading ? (
-      <Spinner size="small" />
+      <View stye={{ padding: 10 }}>
+        <Spinner />
+      </View>
     ) : (
-      <TouchableOpacity onPress={this.onSubmitPost} style={btnSubmitStyle}>
+      <TouchableOpacity
+        disabled={disabled}
+        onPress={this.onSubmitPost}
+        style={[btnSubmitStyle, { backgroundColor }]}
+      >
         <Text style={{ color: 'white', fontSize: 20 }}>Submit</Text>
       </TouchableOpacity>
     );
   }
 
   render() {
-    const { value } = this.state;
-    const { container } = styles;
+    const { value, options } = this.state;
+    const { container, headerContainerStyle } = styles;
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
     const { catName } = params;
     return (
       <View style={{ flex: 1 }}>
+        <View style={headerContainerStyle}>
+          <Ionicons
+            onPress={() => navigation.goBack()}
+            name="ios-arrow-back"
+            size={40}
+            color="#BDBDBD"
+          />
+        </View>
         <Text style={{ fontSize: 30, color: 'gray', alignSelf: 'center' }}>{catName}</Text>
         <View style={container}>
           <Form
@@ -271,6 +317,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#ffffff',
+  },
+  headerContainerStyle: {
+    height: 60,
+    width: '100%',
+    justifyContent: 'center',
+    paddingLeft: 20,
+    marginTop: getStatusBarHeight(),
   },
   img: {
     flex: 1,

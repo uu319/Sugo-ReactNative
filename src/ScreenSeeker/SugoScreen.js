@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, SafeAreaView, Platform, AsyncStorage, Image, StyleSheet } from 'react-native';
+import { SafeAreaView, Platform, AsyncStorage, StyleSheet } from 'react-native';
 import * as firebase from 'firebase';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import PendingPost from '../components/SeekerPendingPost';
@@ -48,8 +48,12 @@ export default class Sugo extends Component {
     this.database.ref(`users/${uid}`).on('value', async snapshot => {
       const { currentPostStatus, currentPost } = snapshot.val();
       this.setState({ userInfo: snapshot.val(), uid, currentPostStatus });
-      if (currentPostStatus === 'accepted') {
-        await AsyncStorage.setItem('postId', currentPost);
+      if (
+        currentPostStatus === 'accepted' ||
+        currentPostStatus === 'started' ||
+        currentPostStatus === 'done'
+      ) {
+        await AsyncStorage.setItem('currentPost', currentPost);
         this.listenPost(currentPost);
       }
     });
@@ -90,18 +94,15 @@ export default class Sugo extends Component {
     return <AcceptedPost post={currentPost} navProp={navigation} />;
   };
 
+  // const { container, headerContainer, headerImageContainer, headerImageStyle } = styles;
+  // <View style={headerContainer}>
+  //   <View style={headerImageContainer}>
+  //     <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
+  //   </View>
+  // </View>
   render() {
-    const { container, headerContainer, headerImageContainer, headerImageStyle } = styles;
-    return (
-      <SafeAreaView style={container}>
-        <View style={headerContainer}>
-          <View style={headerImageContainer}>
-            <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
-          </View>
-        </View>
-        {this.renderBody()}
-      </SafeAreaView>
-    );
+    const { container } = styles;
+    return <SafeAreaView style={container}>{this.renderBody()}</SafeAreaView>;
   }
 }
 
