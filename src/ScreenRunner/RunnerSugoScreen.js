@@ -41,8 +41,8 @@ export default class RunnerSugoScreen extends Component {
   listenUser = async () => {
     const user = await AsyncStorage.getItem('user');
     const parsedUser = JSON.parse(user);
-    const { id } = parsedUser;
-    this.database.ref(`users/${id}`).on('value', async snapshot => {
+    const { uid } = parsedUser;
+    this.database.ref(`users/${uid}`).on('value', async snapshot => {
       const userInfo = snapshot.val();
       const { currentPostStatus, currentPost } = userInfo;
       this.setState({ userInfo, currentPostStatus });

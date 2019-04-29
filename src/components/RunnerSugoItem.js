@@ -48,7 +48,7 @@ export default class SugoList extends Component {
 
   updateSugoOnFirebase = async (post, lat, long) => {
     const { userInfo } = this.props;
-    const { email, userId, name, photoUrl } = userInfo;
+    const { email, userId, displayName, photoURL } = userInfo;
     const { postId, seeker } = post;
     const { seekerId } = seeker;
     const runner = {
@@ -56,8 +56,8 @@ export default class SugoList extends Component {
       runnerId: userId,
       lat,
       long,
-      name,
-      photoUrl,
+      displayName,
+      photoURL,
       withMessage: 'false',
     };
     const updates = {};
@@ -194,7 +194,7 @@ export default class SugoList extends Component {
           <Text style={priceTextStyle}>{`₱${post.metadata.price}.00`}</Text>
           <View style={innerRowContainer}>
             <Ionicons name="ios-person" size={18} color="#E0E0E0" />
-            <Text style={nameTextStyle}>{post.seeker.name}</Text>
+            <Text style={nameTextStyle}>{post.seeker.displayName}</Text>
           </View>
           <View style={innerRowContainer}>
             <Ionicons name="md-locate" size={18} color="#E0E0E0" />

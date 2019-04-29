@@ -15,6 +15,7 @@ export default class Sugo extends Component {
       userInfo: '',
       currentPostStatus: 'loading',
       currentPost: null,
+      uid: '',
     };
   }
 
@@ -43,10 +44,10 @@ export default class Sugo extends Component {
   listenUser = async () => {
     const user = await AsyncStorage.getItem('user');
     const parsedUser = JSON.parse(user);
-    const { id } = parsedUser;
-    this.database.ref(`users/${id}`).on('value', async snapshot => {
+    const { uid } = parsedUser;
+    this.database.ref(`users/${uid}`).on('value', async snapshot => {
       const { currentPostStatus, currentPost } = snapshot.val();
-      this.setState({ userInfo: snapshot.val(), id, currentPostStatus });
+      this.setState({ userInfo: snapshot.val(), uid, currentPostStatus });
       if (currentPostStatus === 'accepted') {
         await AsyncStorage.setItem('postId', currentPost);
         this.listenPost(currentPost);
@@ -57,14 +58,14 @@ export default class Sugo extends Component {
   // retrieve user id and then listen to it
 
   onCatPress = catName => {
-    const { imageUri, userInfo, id } = this.state;
-    const { name, email, photoUrl } = userInfo;
+    const { imageUri, userInfo, uid } = this.state;
+    const { displayName, email, photoURL } = userInfo;
     const { navigation } = this.props;
     const { navigate } = navigation;
     const params = {
-      id,
-      photoUrl,
-      name,
+      uid,
+      photoURL,
+      displayName,
       email,
       imageUri,
       catName,

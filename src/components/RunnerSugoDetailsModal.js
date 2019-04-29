@@ -34,7 +34,7 @@ export default class MyModal extends Component {
     } = styles;
     const { post, hideModal, isVisible, onAcceptSugo } = this.props;
     const { metadata, seeker } = post;
-    const { name, photoUrl } = seeker;
+    const { displayName, photoURL } = seeker;
     const { title, desc, price } = metadata;
     return (
       <Modal animationOut="slideOutLeft" isVisible={isVisible} style={{ margin: 0 }}>
@@ -45,10 +45,10 @@ export default class MyModal extends Component {
           <ScrollView style={scrollViewStyle}>
             <View style={profileContainerStyle}>
               <View style={imageContainerStyle}>
-                <Image resizeMode="contain" source={{ uri: photoUrl }} style={imgStyle} />
+                <Image resizeMode="contain" source={{ uri: photoURL }} style={imgStyle} />
               </View>
               <View style={nameContainerStyle}>
-                <Text style={nameTextStyle}>{name}</Text>
+                <Text style={nameTextStyle}>{displayName}</Text>
                 <Text style={sugoTextStyle}>{title}</Text>
               </View>
             </View>

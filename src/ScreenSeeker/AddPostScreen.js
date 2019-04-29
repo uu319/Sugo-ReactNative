@@ -133,7 +133,7 @@ export default class MyModal extends Component {
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
     console.log('params', params);
-    const { id, name, email, photoUrl, catName } = params;
+    const { uid, displayName, email, photoURL, catName } = params;
     const timeStamp = new Date().getTime();
     const monthIndex = new Date().getMonth();
     const date = new Date().getDate().toString();
@@ -150,25 +150,25 @@ export default class MyModal extends Component {
       price,
     };
     const seeker = {
-      seekerId: id,
-      name,
+      seekerId: uid,
+      displayName,
       email,
-      photoUrl,
+      photoURL,
       lat,
       long,
       withMessage: 'false',
     };
     const insertData = {
-      postId: `${timeStamp}${id}`,
+      postId: `${timeStamp}${uid}`,
       metadata,
       seeker,
       runner: 'none',
     };
-    const postId = `${timeStamp}${id}`;
+    const postId = `${timeStamp}${uid}`;
     const updates = {};
     updates[`/posts/${postId}`] = insertData;
-    updates[`/users/${id}/currentPost`] = postId;
-    updates[`/users/${id}/currentPostStatus`] = 'pending';
+    updates[`/users/${uid}/currentPost`] = postId;
+    updates[`/users/${uid}/currentPostStatus`] = 'pending';
     return firebase
       .database()
       .ref()
@@ -205,8 +205,8 @@ export default class MyModal extends Component {
             .catch(() => {
               this.setState({ loading: false });
               Alert.alert(
-                'Fetching location failed',
-                'Please try to turn on your GPS',
+                'Something went wrong.',
+                'Please check your internet connection or turn your GPS/Location on',
                 [{ text: 'OK' }],
                 {
                   cancelable: false,
@@ -217,8 +217,8 @@ export default class MyModal extends Component {
         .catch(() => {
           this.setState({ loading: false });
           Alert.alert(
-            'Fetching location failed',
-            'Please try to turn on your GPS',
+            'Error',
+            'Please check your internet connection or turn your GPS/Location on',
             [{ text: 'OK' }],
             {
               cancelable: false,

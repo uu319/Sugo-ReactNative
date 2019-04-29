@@ -114,7 +114,7 @@ export default class AcceptedPost extends Component {
           <MapView.Marker coordinate={{ latitude: post.runner.lat, longitude: post.runner.long }}>
             <Image
               source={{
-                uri: post.runner.photoUrl || LOGO_URL,
+                uri: post.runner.photoURL || LOGO_URL,
               }}
               style={styles.circle}
             />
@@ -129,7 +129,7 @@ export default class AcceptedPost extends Component {
           <View style={imgContainer}>
             <Image
               source={{
-                uri: post.runner.photoUrl || LOGO_URL,
+                uri: post.runner.photoURL || LOGO_URL,
               }}
               style={img}
             />
@@ -138,7 +138,7 @@ export default class AcceptedPost extends Component {
             <View style={runnerRowContainer}>
               <View style={{ flex: 3 }}>
                 <View style={runnerNameContainer}>
-                  <Text style={{ fontSize: 20 }}>{post.runner.name}</Text>
+                  <Text style={{ fontSize: 20 }}>{post.runner.displayName}</Text>
                 </View>
                 <View style={runnerEmailContainer}>
                   <Text>{post.runner.email}</Text>

@@ -1,10 +1,24 @@
 import React, { Component } from 'react';
 import { AsyncStorage, Image, View, Alert } from 'react-native';
-import { Google } from 'expo';
+import { GoogleSignIn, Constants } from 'expo';
 import * as firebase from 'firebase';
 import _ from 'lodash';
 import { Button, Spinner } from '../components/common';
-import { googleSigninConfig } from '../components/constants/constants';
+
+const isInClient = Constants.appOwnership === 'expo';
+if (isInClient) {
+  GoogleSignIn.allowInClient();
+}
+
+// const clientIdForUseInTheExpoClient =
+//   '603386649315-vp4revvrcgrcjme51ebuhbkbspl048l9.apps.googleusercontent.com';
+//
+// const yourClientIdForUseInStandalone = Platform.select({
+//   android: '157851373513-mj1d6fddp29k29tn2uiedpke4vhcth13.apps.googleusercontent.com',
+//   ios: '93206224262-6vujqo0h2uiqg74necvl44lh51nor80d.apps.googleusercontent.com',
+// });
+//
+// const clientId = isInClient ? clientIdForUseInTheExpoClient : yourClientIdForUseInStandalone;
 
 class Login extends Component {
   constructor(props) {
@@ -14,6 +28,52 @@ class Login extends Component {
       loading: false,
     };
   }
+
+  componentDidMount() {
+    GoogleSignIn.allowInClient();
+    this.initAsync();
+  }
+
+  // : '93206224262-6vujqo0h2uiqg74necvl44lh51nor80d.apps.googleusercontent.com',
+  initAsync = async () => {
+    try {
+      await GoogleSignIn.initAsync({
+        isOfflineEnabled: true,
+        isPromptEnabled: true,
+        clientId: '93206224262-6vujqo0h2uiqg74necvl44lh51nor80d.apps.googleusercontent.com',
+      });
+    } catch ({ message }) {
+      Alert.alert('initasync', message);
+    }
+  };
+
+  signIn = async () => {
+    try {
+      await GoogleSignIn.askForPlayServicesAsync();
+      const { type, user } = await GoogleSignIn.signInAsync();
+      if (type === 'success') {
+        Alert.alert(
+          'user',
+          JSON.stringify(user),
+          // `${user.uid}, ${user.displayName}, ${user.lastName}, ${user.firstName}, ${user.photoURL}`,
+        );
+        this.setState({ loading: true });
+        const { uid } = user;
+        this.database.ref(`users/${uid}`).once('value', snapshot => {
+          if (!snapshot.exists()) {
+            this.storeUserToFirebase(user);
+          }
+          this.storeUserToLocalStorage(user);
+        });
+      } else {
+        this.setState({ loading: false });
+        console.log('cancelled');
+      }
+    } catch ({ message }) {
+      this.setState({ loading: false });
+      Alert.alert(`message:${message}`, `${message}`);
+    }
+  };
 
   checkIfRunner = async email => {
     const emails = [];
@@ -30,15 +90,15 @@ class Login extends Component {
   };
 
   storeUserToFirebase = async user => {
-    const { email, id, familyName, givenName, name, photoUrl } = user;
+    const { email, uid, firstName, lastName, displayName, photoURL } = user;
     try {
-      await this.database.ref(`users/${id}`).set({
-        userId: id,
+      await this.database.ref(`users/${uid}`).set({
+        userId: uid,
         email,
-        familyName,
-        givenName,
-        name,
-        photoUrl,
+        firstName,
+        lastName,
+        photoURL,
+        displayName,
         currentPost: '',
         currentPostStatus: 'none',
       });
@@ -59,27 +119,27 @@ class Login extends Component {
     }
   };
 
-  signIn = async () => {
-    this.setState({ loading: true });
-    try {
-      const result = await Google.logInAsync(googleSigninConfig);
-      if (result.type === 'success') {
-        const { id } = result.user;
-        this.database.ref(`users/${id}`).once('value', snapshot => {
-          if (!snapshot.exists()) {
-            this.storeUserToFirebase(result.user);
-          }
-          this.storeUserToLocalStorage(result.user);
-        });
-      } else {
-        this.setState({ loading: false });
-        console.log('cancelled');
-      }
-    } catch (e) {
-      this.setState({ loading: false });
-      Alert.alert('error on signIn');
-    }
-  };
+  // signIn = async () => {
+  //   this.setState({ loading: true });
+  //   try {
+  //     const result = await Google.logInAsync(googleSigninConfig);
+  //     if (result.type === 'success') {
+  //       const { id } = result.user;
+  //       this.database.ref(`users/${id}`).once('value', snapshot => {
+  //         if (!snapshot.exists()) {
+  //           this.storeUserToFirebase(result.user);
+  //         }
+  //         this.storeUserToLocalStorage(result.user);
+  //       });
+  //     } else {
+  //       this.setState({ loading: false });
+  //       console.log('cancelled');
+  //     }
+  //   } catch (e) {
+  //     this.setState({ loading: false });
+  //     Alert.alert('error on signIn');
+  //   }
+  // };
 
   renderButton() {
     const { loading } = this.state;

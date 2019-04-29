@@ -3,6 +3,7 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, AsyncStorage, Image } from 'react-native';
 import * as firebase from 'firebase';
+import { GoogleSignIn } from 'expo';
 import { Button } from '../components/common';
 import { LOGO_URL, GLOBAL_STYLES } from '../constants/constants';
 
@@ -10,10 +11,11 @@ export default class Profile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      id: '',
+      uid: '',
       postId: '',
       email: '',
-      photoUrl: '',
+      photoURL: '',
+      displayName: '',
     };
   }
 
@@ -25,9 +27,9 @@ export default class Profile extends Component {
     try {
       const user = await AsyncStorage.getItem('user');
       const parsedUser = JSON.parse(user);
-      const { id, email, photoUrl } = parsedUser;
+      const { uid, email, photoURL, displayName } = parsedUser;
       const postId = await AsyncStorage.getItem('currentPost');
-      this.setState({ postId, id, email, photoUrl });
+      this.setState({ postId, uid, email, photoURL, displayName });
     } catch (error) {
       console.log('error on user');
     }
@@ -38,8 +40,9 @@ export default class Profile extends Component {
   logout = async () => {
     const { navigation } = this.props;
     const { navigate } = navigation;
-    const { id, postId } = this.state;
+    const { uid, postId } = this.state;
     try {
+      await GoogleSignIn.signOutAsync();
       await firebase
         .database()
         .ref(`messages/${postId}`)
@@ -50,7 +53,7 @@ export default class Profile extends Component {
         .off();
       await firebase
         .database()
-        .ref(`users/${id}`)
+        .ref(`users/${uid}`)
         .off();
       await AsyncStorage.clear();
       navigate('AuthLoading');
@@ -60,12 +63,12 @@ export default class Profile extends Component {
   };
 
   render() {
-    const { email, photoUrl, name } = this.state;
+    const { email, photoURL, displayName } = this.state;
     const { img, nameStyle, emailStyle, btnStyle } = styles;
     return (
       <View style={styles.container}>
-        <Image source={{ uri: photoUrl || LOGO_URL }} style={img} />
-        <Text style={nameStyle}>{name}</Text>
+        <Image source={{ uri: photoURL || LOGO_URL }} style={img} />
+        <Text style={nameStyle}>{displayName}</Text>
         <Text style={emailStyle}>{email}</Text>
         <Button buttonStyle={btnStyle} onPress={this.logout}>
           Logout

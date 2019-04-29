@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "93206224262",
+    "firebase_url": "https://sugoph-11fb0.firebaseio.com",
+    "project_id": "sugoph-11fb0",
+    "storage_bucket": "sugoph-11fb0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93206224262:android:6276aa2b5c19212e",
+        "android_client_info": {
+          "package_name": "com.StickyNotes.SugoPhApp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "93206224262-qvjugfr3ld756cobe5ef6m3mre5abdq5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsEjceOyBMLxE9zofN5QrQy_kexUuairU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "93206224262-qvjugfr3ld756cobe5ef6m3mre5abdq5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "93206224262-6vujqo0h2uiqg74necvl44lh51nor80d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.StickyNotes.SugoPhApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

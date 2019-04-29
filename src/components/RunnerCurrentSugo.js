@@ -62,7 +62,7 @@ export default class CurrentSugo extends Component {
           <MapView.Marker coordinate={{ latitude: post.seeker.lat, longitude: post.seeker.long }}>
             <Image
               source={{
-                uri: post.seeker.photoUrl || LOGO_URL,
+                uri: post.seeker.photoURL || LOGO_URL,
               }}
               style={styles.circle}
             />
@@ -77,7 +77,7 @@ export default class CurrentSugo extends Component {
           <View style={imgContainer}>
             <Image
               source={{
-                uri: post.seeker.photoUrl || LOGO_URL,
+                uri: post.seeker.photoURL || LOGO_URL,
               }}
               style={img}
             />
@@ -86,14 +86,14 @@ export default class CurrentSugo extends Component {
             <View style={seekerRowContainer}>
               <View style={{ flex: 3 }}>
                 <View style={seekerNameContainer}>
-                  <Text style={{ fontSize: 20 }}>{post.seeker.name}</Text>
+                  <Text style={{ fontSize: 20 }}>{post.seeker.displayName}</Text>
                 </View>
                 <View style={seekerEmailContainer}>
                   <Text>{post.seeker.email}</Text>
                 </View>
               </View>
               <View style={messageIconContainer}>
-              {this.renderMessageBadge()}
+                {this.renderMessageBadge()}
                 <AntDesign
                   onPress={() => navProp.navigate('ChatApp', { postId })}
                   name="message1"

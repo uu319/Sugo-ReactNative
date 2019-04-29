@@ -14,6 +14,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
 } from 'react-native';
+import { getStatusBarHeight } from 'react-native-status-bar-height';
 import { Ionicons } from '@expo/vector-icons';
 
 export default class ChatApp extends Component {
@@ -34,8 +35,8 @@ export default class ChatApp extends Component {
     const user = await AsyncStorage.getItem('user');
     const type = await AsyncStorage.getItem('type');
     const parsedUser = JSON.parse(user);
-    const { id } = parsedUser;
-    this.setState({ userId: id, type });
+    const { uid } = parsedUser;
+    this.setState({ userId: uid, type });
     this.database.ref(`messages/${postId}`).on('child_added', value => {
       this.setState(prevState => {
         return {
@@ -116,7 +117,7 @@ export default class ChatApp extends Component {
     } else {
       updates[`posts/${postId}/runner/withMessage`] = 'false';
     }
-   this.database.ref().update(updates);
+    this.database.ref().update(updates);
   };
 
   render() {
@@ -195,5 +196,6 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     paddingLeft: 20,
+    marginTop: getStatusBarHeight(),
   },
 });

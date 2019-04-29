@@ -9,9 +9,14 @@ export const firebaseConfig = {
 
 export const googleSigninConfig = {
   behavior: 'web',
-  androidClientId: '544798728580-fajrupu1o0rnf3g94d2dvpo30g4qgv82.apps.googleusercontent.com',
-  iosClientId: '544798728580-5hqsqqrnsogmef7j99b5jubcgb0m1d24.apps.googleusercontent.com',
+  androidClientId: '544798728580-jhcqp16k0e82qto9f0rq4bgq5ranhece.apps.googleusercontent.com',
+  iosClientId: '544798728580-qq2lg7duolvmbj1ps5s5d7bkkag4eklm.apps.googleusercontent.com',
+  iosStandaloneAppClientId:
+    '544798728580-qq2lg7duolvmbj1ps5s5d7bkkag4eklm.apps.googleusercontent.com',
+  androidStandaloneAppClientId:
+    '544798728580-jhcqp16k0e82qto9f0rq4bgq5ranhece.apps.googleusercontent.com',
   scopes: ['profile', 'email'],
+  webClientId: '544798728580-couhsh39kje50v7892sub1olhsojmmuo.apps.googleusercontent.com',
 };
 
 export const GLOBAL_STYLES = {
