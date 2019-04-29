@@ -13,32 +13,23 @@ export default class CurrentSugo extends Component {
     this.state = { post: '', isModalVisible: false, momentAgo: '' };
   }
 
-  componentDidMount() {
-    const post = this.props;
-    const { metadata } = post;
-    const { timeStarted } = metadata;
-    const timeNow = new Date().getTime();
-    const milliseconds = timeNow - timeStarted;
-    this.renderMomentAgo(milliseconds);
-  }
-
   componentWillReceiveProps(newProps) {
     const oldProps = this.props;
     if (oldProps.post !== newProps.post) {
-      // this.setState({ post: newProps.post }, () => {
-      //   const { post } = this.state;
-      //   const { metadata } = post;
-      //   const { timeStarted } = metadata;
-      //   const timeNow = new Date().getTime();
-      //   const milliseconds = timeNow - timeStarted;
-      //   this.renderMomentAgo(milliseconds);
-      // });
+      this.setState({ post: newProps.post }, () => {
+        const { post } = this.state;
+        const { metadata } = post;
+        const { timeStarted } = metadata;
+        const timeNow = new Date().getTime();
+        const milliseconds = timeNow - timeStarted;
+        this.renderMomentAgo(milliseconds);
+      });
     }
   }
 
-  componentWillUnmount() {
-    clearInterval(this.countdownInterval);
-  }
+  // componentWillUnmount() {
+  //   clearInterval(this.countdownInterval);
+  // }
 
   showModal = () => {
     this.setState({ isModalVisible: true });
@@ -237,7 +228,7 @@ export default class CurrentSugo extends Component {
                   <Text style={nameTextStyle}>{post.seeker.displayName}</Text>
                 </View>
                 <View style={sugoNameContainer}>
-                  <Text>{post.seeker.email}</Text>
+                  <Text>Seeker</Text>
                 </View>
               </View>
               <View style={messageIconContainer}>
@@ -279,6 +270,7 @@ export default class CurrentSugo extends Component {
   };
 
   render() {
+    console.log(this.props);
     return <View style={{ flex: 1 }}>{this.renderView()}</View>;
   }
 }

@@ -15,37 +15,23 @@ export default class AcceptedPost extends Component {
     this.state = { post: '', isModalVisible: false, momentAgo: '' };
   }
 
-  componentDidMount() {
-    const post = this.props;
-    const { metadata } = post;
-    const { timeStarted } = metadata;
-    const timeNow = new Date().getTime();
-    const milliseconds = timeNow - timeStarted;
-    this.renderMomentAgo(milliseconds);
-  }
-
   componentWillReceiveProps(newProps) {
     const oldProps = this.props;
     if (oldProps.post !== newProps.post) {
-      // this.setState({ post: newProps.post }, () => {
-      //   const { post } = this.state;
-      //   const { metadata } = post;
-      //   const { timeStarted } = metadata;
-      //   const timeNow = new Date().getTime();
-      //   const milliseconds = timeNow - timeStarted;
-      //   this.renderMomentAgo(milliseconds);
-      // });
+      this.setState({ post: newProps.post }, () => {
+        const { post } = this.state;
+        const { metadata } = post;
+        const { timeStarted } = metadata;
+        const timeNow = new Date().getTime();
+        const milliseconds = timeNow - timeStarted;
+        this.renderMomentAgo(milliseconds);
+      });
     }
   }
 
   componentWillUnmount() {
     clearInterval(this.countdownInterval);
   }
-
-  // componentDidMount() {
-  //   const { post } = this.props;
-  //   this.setState({ post });
-  // }
 
   // onCancelButton = () => {
   //   const { post } = this.state;
@@ -323,7 +309,7 @@ export default class AcceptedPost extends Component {
                   <Text style={nameTextStyle}>{post.runner.displayName}</Text>
                 </View>
                 <View style={sugoNameContainer}>
-                  <Text style={runnerTextStyle}>{post.metadata.title}</Text>
+                  <Text style={runnerTextStyle}>Runner</Text>
                 </View>
               </View>
               <View style={messageIconContainer}>
