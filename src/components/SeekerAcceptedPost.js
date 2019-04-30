@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, Image, Alert, TouchableOpacity } from 'react-na
 import { MapView } from 'expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES, LOGO_URL } from '../constants/constants';
+import { GLOBAL_STYLES, LOGO_URL, getMomentAgo } from './constants/constants';
 import MyModal from './SeekerSugoDetailsModal';
 import Loading from './Loading';
 
@@ -19,12 +19,7 @@ export default class AcceptedPost extends Component {
     const oldProps = this.props;
     if (oldProps.post !== newProps.post) {
       this.setState({ post: newProps.post }, () => {
-        const { post } = this.state;
-        const { metadata } = post;
-        const { timeStarted } = metadata;
-        const timeNow = new Date().getTime();
-        const milliseconds = timeNow - timeStarted;
-        this.renderMomentAgo(milliseconds);
+        this.renderMomentAgo();
       });
     }
   }
@@ -33,74 +28,20 @@ export default class AcceptedPost extends Component {
     clearInterval(this.countdownInterval);
   }
 
-  // onCancelButton = () => {
-  //   const { post } = this.state;
-  //   const { postId, runner, seeker } = post;
-  //   const runnerId = runner.id;
-  //   const seekerId = seeker.id;
-  //   const updates = {};
-  //   updates[`/posts/${postId}/metadata/status`] = 'cancelled';
-  //   updates[`/users/${seekerId}/currentPost`] = '';
-  //   updates[`/users/${seekerId}/currentPostStatus`] = 'none';
-  //   updates[`/users/${runnerId}/currentPost`] = '';
-  //   updates[`/users/${runnerId}/currentPostStatus`] = 'none';
-  //   Alert.alert(
-  //     'Warning',
-  //     'Are you sure you want to cancel sugo?',
-  //     [
-  //       {
-  //         text: 'OK',
-  //         onPress: async () => {
-  //           try {
-  //             await firebase
-  //               .database()
-  //               .ref()
-  //               .update(updates);
-  //             await firebase
-  //               .database()
-  //               .ref(`posts/${postId}`)
-  //               .off();
-  //             await AsyncStorage.removeItem('postId');
-  //             this.setState({ post: '' });
-  //           } catch (e) {
-  //             Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
-  //               cancelable: false,
-  //             });
-  //           }
-  //         },
-  //       },
-  //       { text: 'Cancel' },
-  //     ],
-  //     {
-  //       cancelable: false,
-  //     },
-  //   );
-  // };
-
-  getMomentAgo = milliseconds => {
-    let momentAgo = '';
-    const seconds = milliseconds / 1000;
-    const minutes = seconds / 60;
-    const hour = minutes / 60;
-    const day = hour / 24;
-
-    if (seconds < 60) {
-      momentAgo = `${Math.round(seconds)} sec time spent`;
-    } else if (seconds > 60 && minutes < 60) {
-      momentAgo = `${Math.round(minutes)} min time spent`;
-    } else if (minutes > 60 && hour < 24) {
-      momentAgo = `${Math.round(hour)} hr time spent`;
-    } else {
-      momentAgo = `${Math.round(day)} days time spent`;
+  renderMomentAgo = () => {
+    const { post } = this.state;
+    const { metadata } = post;
+    const { timeStarted } = metadata;
+    const initialTimeNow = new Date().getTime();
+    const initialMilliseconds = initialTimeNow - timeStarted;
+    this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
+    if (post !== '') {
+      this.countdownInterval = setInterval(() => {
+        const timeNow = new Date().getTime();
+        const milliseconds = timeNow - timeStarted;
+        this.setState({ momentAgo: getMomentAgo(milliseconds) });
+      }, 60000);
     }
-    this.setState({ momentAgo });
-  };
-
-  renderMomentAgo = milliseconds => {
-    this.getMomentAgo(milliseconds);
-    this.countdownInterval = setInterval(() => {
-      this.getMomentAgo(milliseconds);
-    }, 10000);
   };
 
   showModal = () => {
@@ -147,12 +88,13 @@ export default class AcceptedPost extends Component {
   };
 
   onConfirmSugo = async () => {
-    const { post } = this.state;
+    const { post, momentAgo } = this.state;
     const { postId, runner, seeker } = post;
     const { seekerId } = seeker;
     const { runnerId } = runner;
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = 'confirmed';
+    updates[`/posts/${postId}/metadata/momentAgo`] = momentAgo;
     updates[`/users/${seekerId}/currentPostStatus`] = 'none';
     updates[`/users/${seekerId}/currentPost`] = '';
     updates[`/users/${runnerId}/currentPostStatus`] = 'none';
@@ -223,7 +165,7 @@ export default class AcceptedPost extends Component {
       btnConfirmContainer,
     } = styles;
 
-    return post ? (
+    return post === '' ? (
       <View style={{ flex: 1 }}>
         <MyModal
           title={post.metadata.title}
@@ -281,7 +223,7 @@ export default class AcceptedPost extends Component {
             {post.metadata.status === 'started' ? (
               <View style={{ flexDirection: 'row' }}>
                 <Ionicons name="ios-timer" size={14} color="white" />
-                <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo}</Text>
+                <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
               </View>
             ) : null}
           </View>

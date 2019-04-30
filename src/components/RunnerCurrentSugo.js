@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-na
 import { MapView } from 'expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES, LOGO_URL } from '../constants/constants';
+import { GLOBAL_STYLES, LOGO_URL, getMomentAgo } from './constants/constants';
 import MyModal from './SeekerSugoDetailsModal';
 import Loading from './Loading';
 
@@ -17,19 +17,14 @@ export default class CurrentSugo extends Component {
     const oldProps = this.props;
     if (oldProps.post !== newProps.post) {
       this.setState({ post: newProps.post }, () => {
-        const { post } = this.state;
-        const { metadata } = post;
-        const { timeStarted } = metadata;
-        const timeNow = new Date().getTime();
-        const milliseconds = timeNow - timeStarted;
-        this.renderMomentAgo(milliseconds);
+        this.renderMomentAgo();
       });
     }
   }
 
-  // componentWillUnmount() {
-  //   clearInterval(this.countdownInterval);
-  // }
+  componentWillUnmount() {
+    clearInterval(this.countdownInterval);
+  }
 
   showModal = () => {
     this.setState({ isModalVisible: true });
@@ -39,30 +34,20 @@ export default class CurrentSugo extends Component {
     this.setState({ isModalVisible: false });
   };
 
-  getMomentAgo = milliseconds => {
-    let momentAgo = '';
-    const seconds = milliseconds / 1000;
-    const minutes = seconds / 60;
-    const hour = minutes / 60;
-    const day = hour / 24;
-
-    if (seconds < 60) {
-      momentAgo = `${Math.round(seconds)} sec time spent`;
-    } else if (seconds > 60 && minutes < 60) {
-      momentAgo = `${Math.round(minutes)} min time spent`;
-    } else if (minutes > 60 && hour < 24) {
-      momentAgo = `${Math.round(hour)} hr time spent`;
-    } else {
-      momentAgo = `${Math.round(day)} days time spent`;
+  renderMomentAgo = () => {
+    const { post } = this.state;
+    const { metadata } = post;
+    const { timeStarted } = metadata;
+    const initialTimeNow = new Date().getTime();
+    const initialMilliseconds = initialTimeNow - timeStarted;
+    this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
+    if (post !== '') {
+      this.countdownInterval = setInterval(() => {
+        const timeNow = new Date().getTime();
+        const milliseconds = timeNow - timeStarted;
+        this.setState({ momentAgo: getMomentAgo(milliseconds) });
+      }, 60000);
     }
-    this.setState({ momentAgo });
-  };
-
-  renderMomentAgo = milliseconds => {
-    this.getMomentAgo(milliseconds);
-    this.countdownInterval = setInterval(() => {
-      this.getMomentAgo(milliseconds);
-    }, 10000);
   };
 
   renderLogo = () => {
@@ -156,7 +141,7 @@ export default class CurrentSugo extends Component {
       btnToggleContainer,
     } = styles;
 
-    return post ? (
+    return post === '' ? (
       <View style={{ flex: 1 }}>
         <MyModal
           title={post.metadata.title}
@@ -205,7 +190,7 @@ export default class CurrentSugo extends Component {
               {post.metadata.status === 'started' ? (
                 <View style={{ flexDirection: 'row' }}>
                   <Ionicons name="ios-timer" size={14} color="white" />
-                  <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo}</Text>
+                  <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
                 </View>
               ) : null}
             </View>

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
 import { Location, Permissions } from 'expo';
 import MyModal from './RunnerSugoDetailsModal';
+import { getMomentAgo } from './constants/constants';
 
 export default class SugoList extends Component {
   state = {
@@ -127,35 +128,51 @@ export default class SugoList extends Component {
     }
   };
 
-  getMomentAgo = milliseconds => {
-    let momentAgo = '';
-    const seconds = milliseconds / 1000;
-    const minutes = seconds / 60;
-    const hour = minutes / 60;
-    const day = hour / 24;
+  // getMomentAgo = milliseconds => {
+  //   let momentAgo = '';
+  //   const seconds = milliseconds / 1000;
+  //   const minutes = seconds / 60;
+  //   const hour = minutes / 60;
+  //   const day = hour / 24;
+  //
+  //   if (seconds < 60) {
+  //     momentAgo = `${Math.round(seconds)} sec ago`;
+  //   } else if (seconds > 60 && minutes < 60) {
+  //     momentAgo = `${Math.round(minutes)} min ago`;
+  //   } else if (minutes > 60 && hour < 24) {
+  //     momentAgo = `${Math.round(hour)} hr ago`;
+  //   } else {
+  //     momentAgo = `${Math.round(day)} days ago`;
+  //   }
+  //   this.setState({ momentAgo });
+  // };
 
-    if (seconds < 60) {
-      momentAgo = `${Math.round(seconds)} sec ago`;
-    } else if (seconds > 60 && minutes < 60) {
-      momentAgo = `${Math.round(minutes)} min ago`;
-    } else if (minutes > 60 && hour < 24) {
-      momentAgo = `${Math.round(hour)} hr ago`;
-    } else {
-      momentAgo = `${Math.round(day)} days ago`;
-    }
-    this.setState({ momentAgo });
-  };
+  // renderMomentAgo = () => {
+  //
+  //   const { metadata } = post;
+  //   const { timeStamp } = metadata;
+  //   const newDate = new Date().getTime();
+  //   const milliseconds = newDate - timeStamp;
+  //   this.getMomentAgo(milliseconds);
+  //   this.countdownInterval = setInterval(() => {
+  //     this.getMomentAgo(milliseconds);
+  //   }, 10000);
+  // };
 
   renderMomentAgo = () => {
     const { post } = this.props;
     const { metadata } = post;
     const { timeStamp } = metadata;
-    const newDate = new Date().getTime();
-    const milliseconds = newDate - timeStamp;
-    this.getMomentAgo(milliseconds);
-    this.countdownInterval = setInterval(() => {
-      this.getMomentAgo(milliseconds);
-    }, 10000);
+    const initialTimeNow = new Date().getTime();
+    const initialMilliseconds = initialTimeNow - timeStamp;
+    this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
+    if (post !== '') {
+      this.countdownInterval = setInterval(() => {
+        const timeNow = new Date().getTime();
+        const milliseconds = timeNow - timeStamp;
+        this.setState({ momentAgo: getMomentAgo(milliseconds) });
+      }, 10000);
+    }
   };
 
   // <Text style={titleTextStyle}>{post.metadata.title}</Text>
@@ -204,7 +221,7 @@ export default class SugoList extends Component {
         </View>
         <View style={innerRightContainer}>
           <View style={momentAgoContainer}>
-            <Text style={momentAgoTextStyle}>{momentAgo}</Text>
+            <Text style={momentAgoTextStyle}>{momentAgo} ago</Text>
           </View>
           <View style={imageContainerStyle}>
             <Image resizeMode="contain" source={uri} style={imgStyle} />

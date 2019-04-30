@@ -45,3 +45,22 @@ export const MONTHARRAY = [
   'Nov',
   'Dec',
 ];
+
+export function getMomentAgo(milliseconds) {
+  let momentAgo = '';
+  const seconds = milliseconds / 1000;
+  const minutes = seconds / 60;
+  const hour = minutes / 60;
+  const day = hour / 24;
+
+  if (seconds < 60) {
+    momentAgo = `${Math.round(seconds)} sec`;
+  } else if (seconds > 60 && minutes < 60) {
+    momentAgo = `${Math.round(minutes)} min`;
+  } else if (minutes > 60 && hour < 24) {
+    momentAgo = `${Math.round(hour)} hr`;
+  } else {
+    momentAgo = `${Math.round(day)} days`;
+  }
+  return momentAgo;
+}

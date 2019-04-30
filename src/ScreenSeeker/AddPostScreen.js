@@ -169,6 +169,7 @@ export default class MyModal extends Component {
       price: 300,
       timeStarted: '',
       timeDone: '',
+      timeSpent: '',
     };
     const seeker = {
       seekerId: uid,
@@ -263,8 +264,8 @@ export default class MyModal extends Component {
 
     const backgroundColor = disabled ? 'gray' : GLOBAL_STYLES.BRAND_COLOR;
     console.log('disabled', disabled);
-    return loading ? (
-      <View stye={{ padding: 10 }}>
+    return !loading ? (
+      <View stye={{ padding: 10, borderWidth: 1, borderColor: 'black' }}>
         <Spinner />
       </View>
     ) : (

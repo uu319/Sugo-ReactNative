@@ -6,18 +6,16 @@ import { getStatusBarHeight } from 'react-native-status-bar-height';
 import Category from './Category';
 // <Text style={{ fontSize: 20, fontWeight: '700', marginVertical: 10 }}>Tap to Sugo</Text>
 export default class Categories extends Component {
-
   render() {
     const { headerContainer, headerImageContainer, headerImageStyle } = styles;
     const { onCatPress } = this.props;
     return (
       <View style={{ flex: 1, marginHorizontal: 8 }}>
-
-      <View style={headerContainer}>
-        <View style={headerImageContainer}>
-          <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
+        <View style={headerContainer}>
+          <View style={headerImageContainer}>
+            <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
+          </View>
         </View>
-      </View>
         <View style={{ flex: 1 }}>
           <View style={{ flex: 1, flexDirection: 'row' }}>
             <Category
