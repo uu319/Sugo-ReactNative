@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, Image, Alert, TouchableOpacity } from 'react-na
 import { MapView } from 'expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES, LOGO_URL, getMomentAgo } from './constants/constants';
+import { GLOBAL_STYLES, LOGO_URL, getMomentAgo } from './Constants';
 import MyModal from './SeekerSugoDetailsModal';
 import Loading from './Loading';
 
@@ -165,7 +165,7 @@ export default class AcceptedPost extends Component {
       btnConfirmContainer,
     } = styles;
 
-    return post === '' ? (
+    return !(post === '') ? (
       <View style={{ flex: 1 }}>
         <MyModal
           title={post.metadata.title}

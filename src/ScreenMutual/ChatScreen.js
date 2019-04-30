@@ -13,9 +13,12 @@ import {
   FlatList,
   Dimensions,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
+import { ImagePicker } from 'expo';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import { Ionicons } from '@expo/vector-icons';
+import { timeTo12HrFormat } from '../components/Constants';
 
 export default class ChatApp extends Component {
   constructor(props) {
@@ -27,6 +30,7 @@ export default class ChatApp extends Component {
       textMessage: '',
       messageList: [],
       type: '',
+      image:'',
     };
   }
 
@@ -61,18 +65,61 @@ export default class ChatApp extends Component {
     return result;
   };
 
-  sendMessage = async () => {
-    const { textMessage, postId, userId, type } = this.state;
-    if (textMessage.length > 0) {
+  _pickImage = async () => {
+    const { postId } = this.state;
+    console.log('clicked');
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+
+    console.log(result);
+
+    if (!result.cancelled) {
+      this.uploadImage(result.uri, postId)
+        .then(() => {
+          Alert.alert('Success');
+        })
+        .catch(error => {
+          Alert.alert(error);
+        });
+    }
+  };
+
+  uploadImage = async (uri, imageName) => {
+    try{
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const timeStamp = new Date().getTime();
+      const imageRef = `images`;
+      const ref = firebase
+        .storage()
+        .ref()
+        .child(imageRef);
+      try {
+        await ref.put(blob);
+        // this.sendMessage('image', imageRef);
+      } catch (e) {
+        Alert.alert('Something went wrong.');
+      }
+    } catch ({ message }) {
+      console.log('fetch', message);
+    }
+  };
+
+  sendMessage = async (msgType, msg) => {
+    const { postId, userId, type } = this.state;
+    if (msg.length > 0) {
       const msgId = await this.database
         .ref('messages')
         .child(postId)
         .push().key;
       const updates = {};
       const message = {
-        message: textMessage,
+        message: msg,
         time: firebase.database.ServerValue.TIMESTAMP,
         from: userId,
+        msgType,
       };
       if (type === 'runner') {
         updates[`posts/${postId}/seeker/withMessage`] = 'true';
@@ -87,20 +134,29 @@ export default class ChatApp extends Component {
 
   renderRow = ({ item }) => {
     const { userId } = this.state;
+    console.log('rooow', item);
     return (
-      <View
-        style={{
-          width: '60%',
-          alignSelf: item.from === userId ? 'flex-end' : 'flex-start',
-          backgroundColor: item.from === userId ? '#00897b' : '#7cb342',
-          margin: 10,
-          borderRadius: 5,
-        }}
-      >
-        <Text style={{ color: '#eee', padding: 3, fontSize: 11 }}>
-          {this.convertTime(item.time)}
+      <View style={{ flex: 1, margin: 10 }}>
+        <View
+          style={{
+            width: '60%',
+            alignSelf: item.from === userId ? 'flex-end' : 'flex-start',
+            backgroundColor: item.from === userId ? '#00897b' : '#7cb342',
+            borderRadius: 5,
+            padding: 10,
+          }}
+        >
+          <Text style={{ color: '#fff', fontSize: 16 }}>{item.message}</Text>
+        </View>
+        <Text
+          style={{
+            color: '#828282',
+            fontSize: 11,
+            alignSelf: item.from === userId ? 'flex-end' : 'flex-start',
+          }}
+        >
+          {timeTo12HrFormat(this.convertTime(item.time))}
         </Text>
-        <Text style={{ color: '#fff', padding: 7, fontSize: 16 }}>{item.message}</Text>
       </View>
     );
   };
@@ -147,13 +203,19 @@ export default class ChatApp extends Component {
           keyboardVerticalOffset={14}
           behavior="padding"
         >
+          <TouchableOpacity onPress={this._pickImage} style={sendButtonStyle}>
+            <Ionicons name="md-photos" size={32} color="black" />
+          </TouchableOpacity>
           <TextInput
             style={inputStyle}
             value={textMessage}
             placeHolder="Type message"
             onChangeText={this.handleChange('textMessage')}
           />
-          <TouchableOpacity onPress={this.sendMessage} style={sendButtonStyle}>
+          <TouchableOpacity
+            onPress={() => this.sendMessage('text', textMessage)}
+            style={sendButtonStyle}
+          >
             <Ionicons name="md-send" size={32} color="black" />
           </TouchableOpacity>
         </KeyboardAvoidingView>

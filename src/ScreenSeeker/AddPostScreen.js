@@ -13,7 +13,7 @@ import * as firebase from 'firebase';
 import { Location, Permissions } from 'expo';
 import { Ionicons } from '@expo/vector-icons';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
-import { MONTHARRAY, GLOBAL_STYLES } from '../components/constants/constants';
+import { MONTHARRAY, GLOBAL_STYLES } from '../components/Constants';
 import { Spinner } from '../components/common/Spinner';
 
 const { width } = Dimensions.get('window');
@@ -56,10 +56,10 @@ export default class MyModal extends Component {
       },
       controlLabel: {
         normal: {
-          color: GLOBAL_STYLES.BRAND_COLOR,
+          color: 'black',
           fontSize: 21,
           marginBottom: 7,
-          fontWeight: '600',
+          fontWeight: '300',
         },
         // the style applied when a validation error occours
         error: {
@@ -95,9 +95,10 @@ export default class MyModal extends Component {
               ...Form.stylesheet.textbox,
               normal: {
                 ...Form.stylesheet.textbox.normal,
-                height: 100,
+                height: 130,
                 textAlignVertical: 'top',
-                padding: 5,
+                padding: 10,
+                backgroundColor: 'white',
               },
             },
           },
@@ -151,7 +152,6 @@ export default class MyModal extends Component {
   insertPost = (desc, lat, long, address) => {
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
-    console.log('params', params);
     const { uid, displayName, email, photoURL, catName } = params;
     const timeStamp = new Date().getTime();
     const monthIndex = new Date().getMonth();
@@ -262,12 +262,10 @@ export default class MyModal extends Component {
       disabled = false;
     }
 
-    const backgroundColor = disabled ? 'gray' : GLOBAL_STYLES.BRAND_COLOR;
+    const backgroundColor = disabled ? '#FFCA85' : GLOBAL_STYLES.BRAND_COLOR;
     console.log('disabled', disabled);
-    return !loading ? (
-      <View stye={{ padding: 10, borderWidth: 1, borderColor: 'black' }}>
-        <Spinner />
-      </View>
+    return loading ? (
+      <Spinner />
     ) : (
       <TouchableOpacity
         disabled={disabled}
@@ -295,8 +293,8 @@ export default class MyModal extends Component {
             color="#BDBDBD"
           />
         </View>
-        <Text style={{ fontSize: 30, color: 'gray', alignSelf: 'center' }}>{catName}</Text>
         <View style={container}>
+          <Text style={{ fontSize: 30, alignSelf: 'center' }}>{catName}</Text>
           <Form
             ref={c => {
               this._form = c;
@@ -306,7 +304,7 @@ export default class MyModal extends Component {
             value={value}
             onChange={val => this.setState({ value: val })}
           />
-          {this.renderButton()}
+          <View style={{ marginTop: 10 }}>{this.renderButton()}</View>
         </View>
       </View>
     );
@@ -317,7 +315,13 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'white',
+    marginHorizontal: 11,
+    borderRadius: 13,
+    shadowOpacity: 1,
+    shadowOffset: { height: 1, width: 1 },
+    shadowColor: 'gray',
+    elevation: 1,
   },
   headerContainerStyle: {
     height: 60,
@@ -341,7 +345,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     flex: 1,
     alignItems: 'center',
-    marginVertical: 10,
+    marginTop: 10,
+    padding: 5,
   },
   priceInputContainer: {
     backgroundColor: 'white',
@@ -363,7 +368,6 @@ const styles = StyleSheet.create({
     backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
     height: 40,
     width: '30%',
-    marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 4,

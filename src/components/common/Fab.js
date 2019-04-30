@@ -2,7 +2,7 @@
 
 import React, { Component } from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
-import { GLOBAL_STYLES } from '../constants/constants';
+import { GLOBAL_STYLES } from '../Constants';
 
 class Fab extends Component {
   render() {

@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
 import { Location, Permissions } from 'expo';
 import MyModal from './RunnerSugoDetailsModal';
-import { getMomentAgo } from './constants/constants';
+import { getMomentAgo } from './Constants';
 
 export default class SugoList extends Component {
   state = {
@@ -211,11 +211,11 @@ export default class SugoList extends Component {
         <View style={infoContainer}>
           <Text style={priceTextStyle}>{`₱${post.metadata.price}.00`}</Text>
           <View style={innerRowContainer}>
-            <Ionicons name="ios-person" size={18} color="#E0E0E0" />
+            <Ionicons name="ios-person" size={18} color="gray" />
             <Text style={nameTextStyle}>{post.seeker.displayName}</Text>
           </View>
           <View style={innerRowContainer}>
-            <Ionicons name="md-locate" size={18} color="#E0E0E0" />
+            <Ionicons name="md-locate" size={18} color="gray" />
             <Text style={addressTextStyle}>{post.metadata.address}</Text>
           </View>
         </View>
@@ -234,30 +234,32 @@ export default class SugoList extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    height: 135,
+    height: 120,
     width: '95%',
     borderColor: '#dddddd',
-    borderWidth: 0.5,
+    borderWidth: 0.4,
     borderRadius: 10,
     alignSelf: 'center',
     overflow: 'hidden',
     flexDirection: 'row',
-    // elevation: 3,
-    // shadowColor: 'gray',
-    // shadowOffset: { width: 3, height: 3 },
-    // shadowOpacity: 0.5,
+    margin: 5,
+    elevation: 1,
   },
   infoContainer: {
     flex: 2,
+    padding: 13,
   },
   priceTextStyle: {
     color: '#7F838F',
+    fontSize: 24,
   },
   nameTextStyle: {
-    color: '#7F838F',
+    color: '#585966',
+    fontSize: 16,
   },
   addressTextStyle: {
-    color: '#7F838F',
+    color: '#585966',
+    fontSize: 16,
   },
   innerRowContainer: {
     flexDirection: 'row',
@@ -273,7 +275,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   momentAgoTextStyle: {
-    color: '#dddddd',
+    color: '#828282',
   },
   imageContainerStyle: {
     height: 76,

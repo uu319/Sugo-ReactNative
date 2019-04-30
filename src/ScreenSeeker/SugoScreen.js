@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { SafeAreaView, Platform, AsyncStorage, StyleSheet } from 'react-native';
+import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackAndroid } from 'react-native';
 import * as firebase from 'firebase';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import PendingPost from '../components/SeekerPendingPost';
@@ -14,7 +14,8 @@ export default class Sugo extends Component {
     this.state = {
       userInfo: '',
       currentPostStatus: 'loading',
-      currentPost: null,
+      currentPostObject: {},
+      currentPostId: '',
       uid: '',
     };
   }
@@ -28,18 +29,14 @@ export default class Sugo extends Component {
 
   componentDidMount() {
     this.listenUser();
+    BackAndroid.removeEventListener('hardwareBackPress');
   }
-
-  // post listener
 
   listenPost = currentPost => {
     this.database.ref(`posts/${currentPost}`).on('value', post => {
-      this.setState({ currentPost: post.val() });
+      this.setState({ currentPostObject: post.val() });
     });
   };
-
-  // user listener watch post if user status if accepted
-  // store post id in local storage when user status is accepted
 
   listenUser = async () => {
     const user = await AsyncStorage.getItem('user');
@@ -47,7 +44,12 @@ export default class Sugo extends Component {
     const { uid } = parsedUser;
     this.database.ref(`users/${uid}`).on('value', async snapshot => {
       const { currentPostStatus, currentPost } = snapshot.val();
-      this.setState({ userInfo: snapshot.val(), uid, currentPostStatus });
+      this.setState({
+        userInfo: snapshot.val(),
+        uid,
+        currentPostStatus,
+        currentPostId: currentPost,
+      });
       if (
         currentPostStatus === 'accepted' ||
         currentPostStatus === 'started' ||
@@ -58,8 +60,6 @@ export default class Sugo extends Component {
       }
     });
   };
-
-  // retrieve user id and then listen to it
 
   onCatPress = catName => {
     const { imageUri, userInfo, uid } = this.state;
@@ -80,7 +80,7 @@ export default class Sugo extends Component {
   };
 
   renderBody = () => {
-    const { currentPostStatus, currentPost } = this.state;
+    const { currentPostStatus, currentPostObject, currentPostId } = this.state;
     const { navigation } = this.props;
     if (currentPostStatus === 'loading') {
       return <Loading />;
@@ -89,17 +89,11 @@ export default class Sugo extends Component {
       return <Categories onCatPress={this.onCatPress} />;
     }
     if (currentPostStatus === 'pending') {
-      return <PendingPost />;
+      return <PendingPost postId={currentPostId} />;
     }
-    return <AcceptedPost post={currentPost} navProp={navigation} />;
+    return <AcceptedPost post={currentPostObject} navProp={navigation} />;
   };
 
-  // const { container, headerContainer, headerImageContainer, headerImageStyle } = styles;
-  // <View style={headerContainer}>
-  //   <View style={headerImageContainer}>
-  //     <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
-  //   </View>
-  // </View>
   render() {
     const { container } = styles;
     return <SafeAreaView style={container}>{this.renderBody()}</SafeAreaView>;

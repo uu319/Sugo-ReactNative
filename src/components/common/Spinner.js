@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { GLOBAL_STYLES } from '../constants/constants';
+import { GLOBAL_STYLES } from '../Constants';
 
 const Spinner = ({ size }) => {
   return (

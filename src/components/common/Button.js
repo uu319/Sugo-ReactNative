@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
-import { GLOBAL_STYLES } from '../constants/constants';
+import { GLOBAL_STYLES } from '../Constants';
 
 const Button = props => {
   const { buttonStyles, textStyles } = styles;

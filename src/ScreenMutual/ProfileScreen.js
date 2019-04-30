@@ -1,11 +1,9 @@
-/* @flow */
-
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, AsyncStorage, Image } from 'react-native';
 import * as firebase from 'firebase';
 import { GoogleSignIn } from 'expo';
 import { Button } from '../components/common';
-import { LOGO_URL, GLOBAL_STYLES } from '../components/constants/constants';
+import { LOGO_URL, GLOBAL_STYLES } from '../components/Constants';
 
 export default class Profile extends Component {
   constructor(props) {

@@ -1,9 +1,10 @@
 import React from 'react';
 import * as firebase from 'firebase';
+import { BackAndroid } from 'react-native';
 import { AppLoading, Asset, Font } from 'expo';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons, AntDesign } from '@expo/vector-icons';
 import SwitchNav from './src/navigators/MainNav';
-import { firebaseConfig } from './src/components/constants/constants';
+import { firebaseConfig } from './src/components/Constants';
 
 firebase.initializeApp(firebaseConfig);
 

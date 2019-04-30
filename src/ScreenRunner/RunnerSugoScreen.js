@@ -1,7 +1,7 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { StyleSheet, FlatList, SafeAreaView, AsyncStorage } from 'react-native';
+import { StyleSheet, FlatList, SafeAreaView, AsyncStorage, View, Image } from 'react-native';
 import * as firebase from 'firebase';
 import _ from 'lodash';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
@@ -14,10 +14,10 @@ export default class RunnerSugoScreen extends Component {
     super(props);
     this.database = firebase.database();
     this.state = {
-      posts: [],
+      posts: {},
       userInfo: '',
       currentPostStatus: 'loading',
-      currentPost: null,
+      // currentPostObject: {},
     };
   }
 
@@ -59,7 +59,7 @@ export default class RunnerSugoScreen extends Component {
 
   listenPost = currentPost => {
     this.database.ref(`posts/${currentPost}`).on('value', post => {
-      this.setState({ currentPost: post.val() });
+      this.setState({ currentPostObject: post.val() });
     });
   };
 
@@ -71,18 +71,26 @@ export default class RunnerSugoScreen extends Component {
   renderFlatList = () => {
     const { posts } = this.state;
     const { navigation } = this.props;
+    const { headerContainer, headerImageStyle, headerImageContainer } = styles;
     return (
-      <FlatList
-        data={posts}
-        renderItem={this.renderSugoList}
-        navProp={navigation}
-        keyExtractor={item => item.postId}
-      />
+      <View syle={{ flex: 1 }}>
+        <View style={headerContainer}>
+          <View style={headerImageContainer}>
+            <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
+          </View>
+        </View>
+        <FlatList
+          data={posts}
+          renderItem={this.renderSugoList}
+          navProp={navigation}
+          keyExtractor={item => item.postId}
+        />
+      </View>
     );
   };
 
   renderBody = () => {
-    const { currentPostStatus, currentPost } = this.state;
+    const { currentPostStatus, currentPostObject } = this.state;
     const { navigation } = this.props;
     if (currentPostStatus === 'loading') {
       return <Loading />;
@@ -90,18 +98,13 @@ export default class RunnerSugoScreen extends Component {
     if (currentPostStatus === 'none') {
       return this.renderFlatList();
     }
-    return <CurrentSugo navProp={navigation} post={currentPost} />;
+    // return null;
+    return <CurrentSugo navProp={navigation} post={currentPostObject} />;
   };
-
-  // const { container, headerContainer, headerImageContainer, headerImageStyle } = styles;
-  // <View style={headerContainer}>
-  //   <View style={headerImageContainer}>
-  //     <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
-  //   </View>
-  // </View>
 
   render() {
     const { container } = styles;
+    // console.log('posttttttt', this.state.currentPostObject);
     return <SafeAreaView style={container}>{this.renderBody()}</SafeAreaView>;
   }
 }

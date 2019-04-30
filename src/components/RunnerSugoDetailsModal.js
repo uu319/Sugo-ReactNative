@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
-import { GLOBAL_STYLES } from './constants/constants';
+import { GLOBAL_STYLES, renderSugoLogo } from './Constants';
 
 export default class MyModal extends Component {
   render() {
@@ -49,7 +49,16 @@ export default class MyModal extends Component {
               </View>
               <View style={nameContainerStyle}>
                 <Text style={nameTextStyle}>{displayName}</Text>
-                <Text style={sugoTextStyle}>{title}</Text>
+                <View
+                  style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
+                >
+                  <Image
+                    resizeMode="contain"
+                    source={renderSugoLogo(title)}
+                    style={{ height: 16, width: 16 }}
+                  />
+                  <Text style={sugoTextStyle}>{title}</Text>
+                </View>
               </View>
             </View>
             <View style={detailsContainerStyle}>
@@ -60,7 +69,16 @@ export default class MyModal extends Component {
           <View style={footerContainerStyle}>
             <View style={priceContainerStyle}>
               <Text style={priceTextStyle}>₱ {price}.00</Text>
-              <Text>Some text here.</Text>
+              <View
+                style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start' }}
+              >
+                <Image
+                  resizeMode="contain"
+                  source={renderSugoLogo(title)}
+                  style={{ height: 16, width: 16, borderRadius: 1 }}
+                />
+                <Text style={sugoTextStyle}>{title}</Text>
+              </View>
             </View>
             <View style={btnContainerStyle}>
               <TouchableOpacity onPress={() => onAcceptSugo(post)} style={btnAcceptStyle}>
@@ -79,12 +97,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'black',
   },
   headerContainerStyle: {
     height: 60,
     width: '100%',
     justifyContent: 'center',
     paddingLeft: 20,
+    borderWidth: 1,
+    borderColor: 'black',
   },
   scrollViewStyle: {
     margin: 20,
@@ -92,26 +114,35 @@ const styles = StyleSheet.create({
   },
   profileContainerStyle: {
     flex: 1,
+    borderWidth: 1,
+    borderColor: 'black',
   },
   detailsContainerStyle: {
     flex: 1.5,
     marginTop: 20,
+    borderWidth: 1,
+    borderColor: 'black',
   },
   footerContainerStyle: {
     height: 80,
     width: '100%',
     flexDirection: 'row',
     padding: 13,
-    borderColor: '#dddddd',
     borderTopWidth: 0.5,
+    borderWidth: 1,
+    borderColor: 'black',
   },
   imageContainerStyle: {
     height: 110,
     width: 110,
     alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: 'black',
   },
   nameContainerStyle: {
     flex: 1,
+    borderWidth: 1,
+    borderColor: 'black',
   },
   imgStyle: {
     flex: 1,
@@ -128,17 +159,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     alignSelf: 'center',
     fontWeight: '300',
+    color: '#828282',
   },
   detailsTextStyle: {
     fontSize: 17,
+    color: '#6E798A',
   },
   priceContainerStyle: {
     flex: 1.6,
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'black',
   },
   btnContainerStyle: {
     flex: 1,
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'black',
   },
   priceTextStyle: {
     fontSize: 30,

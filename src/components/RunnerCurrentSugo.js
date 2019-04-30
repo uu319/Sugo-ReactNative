@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-na
 import { MapView } from 'expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES, LOGO_URL, getMomentAgo } from './constants/constants';
+import { GLOBAL_STYLES, LOGO_URL, getMomentAgo, renderSugoLogo } from './Constants';
 import MyModal from './SeekerSugoDetailsModal';
 import Loading from './Loading';
 
@@ -48,29 +48,6 @@ export default class CurrentSugo extends Component {
         this.setState({ momentAgo: getMomentAgo(milliseconds) });
       }, 60000);
     }
-  };
-
-  renderLogo = () => {
-    const { post } = this.props;
-    const { metadata } = post;
-    const { title } = metadata;
-    if (title === 'Grocery') {
-      return require('../myassets/sugoGrocery.png');
-      // this.setState({ uri: require('../myassets/sugoGrocery.png') });
-    }
-    if (title === 'Pickup / Delivery') {
-      return require('../myassets/sugoDelivery.png');
-    }
-    if (title === 'Filing/Claiming of Documents') {
-      return require('../myassets/sugoDocuments.png');
-    }
-    if (title === 'Bills Payment') {
-      return require('../myassets/sugoBillsPayment.png');
-    }
-    if (title === 'Household Chores') {
-      return require('../myassets/sugoHousehold.png');
-    }
-    return require('../myassets/sugoOthers.png');
   };
 
   onUpdateSugoStatus = async update => {
@@ -119,7 +96,6 @@ export default class CurrentSugo extends Component {
 
   renderView() {
     const { post, isModalVisible, momentAgo } = this.state;
-    const { postId } = post;
     const { navProp } = this.props;
     const {
       img,
@@ -141,7 +117,7 @@ export default class CurrentSugo extends Component {
       btnToggleContainer,
     } = styles;
 
-    return post === '' ? (
+    return !(post === '') ? (
       <View style={{ flex: 1 }}>
         <MyModal
           title={post.metadata.title}
@@ -180,7 +156,11 @@ export default class CurrentSugo extends Component {
           </View>
           <View style={detailContainer}>
             <View style={logoImageContainer}>
-              <Image resizeMode="contain" source={this.renderLogo()} style={logoImageStyle} />
+              <Image
+                resizeMode="contain"
+                source={renderSugoLogo(post.metadata.title)}
+                style={logoImageStyle}
+              />
             </View>
             <View style={{ flex: 1.5, justifyContent: 'center' }}>
               <Text style={{ color: 'white', fontSize: 29, fontWeight: '300' }}>
@@ -219,7 +199,7 @@ export default class CurrentSugo extends Component {
               <View style={messageIconContainer}>
                 {this.renderMessageBadge()}
                 <AntDesign
-                  onPress={() => navProp.navigate('ChatApp', { postId })}
+                  onPress={() => navProp.navigate('ChatApp', { postId: post.postId })}
                   name="message1"
                   size={32}
                   color={GLOBAL_STYLES.BRAND_COLOR}

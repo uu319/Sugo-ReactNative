@@ -64,3 +64,39 @@ export function getMomentAgo(milliseconds) {
   }
   return momentAgo;
 }
+
+export function renderSugoLogo(title) {
+  if (title === 'Grocery') {
+    return require('../myassets/sugoGrocery.png');
+  }
+  if (title === 'Pickup / Delivery') {
+    return require('../myassets/sugoDelivery.png');
+  }
+  if (title === 'Filing/Claiming of Documents') {
+    return require('../myassets/sugoDocuments.png');
+  }
+  if (title === 'Bills Payment') {
+    return require('../myassets/sugoBillsPayment.png');
+  }
+  if (title === 'Household Chores') {
+    return require('../myassets/sugoHousehold.png');
+  }
+  return require('../myassets/sugoOthers.png');
+}
+
+export function timeTo12HrFormat(time) {
+  // Take a time in 24 hour format and format it in 12 hour format
+  const timePartArray = time.split(':');
+  let ampm = 'AM';
+
+  if (timePartArray[0] >= 12) {
+    ampm = 'PM';
+  }
+
+  if (timePartArray[0] > 12) {
+    timePartArray[0] -= 12;
+  }
+
+  const formattedTime = `${timePartArray[0]}:${timePartArray[1]} ${ampm}`;
+  return formattedTime;
+}
