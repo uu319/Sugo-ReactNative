@@ -3,7 +3,13 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-na
 import { MapView } from 'expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES, LOGO_URL, getMomentAgo, renderSugoLogo } from './Constants';
+import {
+  GLOBAL_STYLES,
+  LOGO_URL,
+  getMomentAgo,
+  renderSugoLogo,
+  sendNotification,
+} from './Constants';
 import MyModal from './ViewSugoSlideUp';
 import Loading from './Loading';
 import Chat from './ChatModal';
@@ -65,8 +71,10 @@ export default class CurrentSugo extends Component {
   onUpdateSugoStatus = async update => {
     const { post } = this.state;
     const { postId, runner, seeker } = post;
-    const { seekerId } = seeker;
+    const { seekerId, seekerToken } = seeker;
     const { runnerId } = runner;
+    const notifTitle = 'Hoooray!';
+    let notifBody = '';
     const database = firebase.database();
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = update;
@@ -75,12 +83,15 @@ export default class CurrentSugo extends Component {
     const timeStamp = new Date().getTime();
     if (update === 'started') {
       updates[`/posts/${postId}/metadata/timeStarted`] = timeStamp;
+      notifBody = 'Your runner started your sugo';
     }
     if (update === 'done') {
       updates[`/posts/${postId}/metadata/timeDone`] = timeStamp;
+      notifBody = 'Your runner completed your sugo';
     }
     try {
       await database.ref().update(updates);
+      sendNotification(seekerToken, notifTitle, notifBody);
     } catch (e) {
       Alert.alert('Error', 'Please check your internet connection');
     }

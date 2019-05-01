@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
 import { Location, Permissions } from 'expo';
 import MyModal from './RunnerSugoDetailsModal';
-import { getMomentAgo } from './Constants';
+import { getMomentAgo, sendNotification } from './Constants';
 
 export default class SugoList extends Component {
   state = {
@@ -76,7 +76,7 @@ export default class SugoList extends Component {
           try {
             await database.ref().update(updates);
             Alert.alert('token', token);
-            this.sendNotification(token, 'Horay!', 'Someone accepted your sugo');
+            sendNotification(seekerToken, 'Horay!', 'Someone accepted your sugo');
             this.setState({ isModalVisible: false });
           } catch (e) {
             Alert.alert('Something went wrong please try again');
@@ -88,24 +88,6 @@ export default class SugoList extends Component {
     } catch (e) {
       Alert.alert('Something went wrong please try again');
     }
-  };
-
-  sendNotification = (token, title, body) => {
-    fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: {
-          value: token,
-        },
-        user: {
-          username: 'Brent',
-        },
-      }),
-    });
   };
 
   acceptSugo = post => {

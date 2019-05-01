@@ -100,3 +100,19 @@ export function timeTo12HrFormat(time) {
   const formattedTime = `${timePartArray[0]}:${timePartArray[1]} ${ampm}`;
   return formattedTime;
 }
+
+export function sendNotification(token, title, body) {
+  fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      to: token,
+      sound: 'default',
+      title,
+      body,
+    }),
+  });
+}

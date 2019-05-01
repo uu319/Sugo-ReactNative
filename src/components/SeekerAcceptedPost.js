@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, Image, Alert, TouchableOpacity } from 'react-na
 import { MapView } from 'expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES, LOGO_URL, getMomentAgo } from './Constants';
+import { GLOBAL_STYLES, LOGO_URL, getMomentAgo, sendNotification } from './Constants';
 import MyModal from './ViewSugoSlideUp';
 import Loading from './Loading';
 import Chat from './ChatModal';
@@ -101,7 +101,7 @@ export default class AcceptedPost extends Component {
     const { post } = this.state;
     const { postId, runner, seeker } = post;
     const { seekerId } = seeker;
-    const { runnerId } = runner;
+    const { runnerId, runnerToken } = runner;
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = 'pending';
     updates[`/users/${seekerId}/currentPostStatus`] = 'pending';
@@ -117,6 +117,7 @@ export default class AcceptedPost extends Component {
           onPress: async () => {
             try {
               await database.ref().update(updates);
+              sendNotification(runnerToken, 'Sorry', 'Your seeker cancelled the transaction');
             } catch (e) {
               Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
                 cancelable: false,
