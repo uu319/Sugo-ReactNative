@@ -3,7 +3,7 @@
     "name": "SugoPhApp",
     "slug": "SugoPhApp",
     "privacy": "public",
-    "sdkVersion": "32.0.0",
+    "sdkVersion": "29.0.0",
     "description": "An online marketplace for services.",
     "platforms": [
       "ios",

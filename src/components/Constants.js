@@ -59,7 +59,7 @@ export function getMomentAgo(milliseconds) {
     momentAgo = `${Math.round(minutes)} min`;
   } else if (minutes > 60 && hour < 24) {
     momentAgo = `${Math.round(hour)} hr`;
-  } else {
+  } else if (hour > 24) {
     momentAgo = `${Math.round(day)} days`;
   }
   return momentAgo;

@@ -49,9 +49,9 @@ export default class SugoList extends Component {
 
   updateSugoOnFirebase = async (post, lat, long) => {
     const { userInfo } = this.props;
-    const { email, userId, displayName, photoURL } = userInfo;
+    const { email, userId, displayName, photoURL, token } = userInfo;
     const { postId, seeker } = post;
-    const { seekerId } = seeker;
+    const { seekerId, seekerToken } = seeker;
     const runner = {
       email,
       runnerId: userId,
@@ -60,6 +60,7 @@ export default class SugoList extends Component {
       displayName,
       photoURL,
       withMessage: 'false',
+      runnerToken: token,
     };
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = 'accepted';
@@ -74,6 +75,8 @@ export default class SugoList extends Component {
         if (snapshot.val() === 'pending') {
           try {
             await database.ref().update(updates);
+            Alert.alert('token', token);
+            this.sendNotification(token, 'Horay!', 'Someone accepted your sugo');
             this.setState({ isModalVisible: false });
           } catch (e) {
             Alert.alert('Something went wrong please try again');
@@ -85,6 +88,24 @@ export default class SugoList extends Component {
     } catch (e) {
       Alert.alert('Something went wrong please try again');
     }
+  };
+
+  sendNotification = (token, title, body) => {
+    fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token: {
+          value: token,
+        },
+        user: {
+          username: 'Brent',
+        },
+      }),
+    });
   };
 
   acceptSugo = post => {

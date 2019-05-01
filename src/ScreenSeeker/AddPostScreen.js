@@ -152,7 +152,7 @@ export default class MyModal extends Component {
   insertPost = (desc, lat, long, address) => {
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
-    const { uid, displayName, email, photoURL, catName } = params;
+    const { uid, displayName, email, photoURL, catName, token } = params;
     const timeStamp = new Date().getTime();
     const monthIndex = new Date().getMonth();
     const date = new Date().getDate().toString();
@@ -178,6 +178,7 @@ export default class MyModal extends Component {
       photoURL,
       lat,
       long,
+      seekerToken: token,
       withMessage: 'false',
     };
     const insertData = {
@@ -224,28 +225,18 @@ export default class MyModal extends Component {
               const address = `${street}, ${city}, ${country}`;
               this.insertPost(desc, latitude, longitude, address);
             })
-            .catch(() => {
+            .catch(({ message }) => {
               this.setState({ loading: false });
-              Alert.alert(
-                'Something went wrong.',
-                'Please check your internet connection or turn your GPS/Location on',
-                [{ text: 'OK' }],
-                {
-                  cancelable: false,
-                },
-              );
+              Alert.alert('Something went wrong.', message, [{ text: 'OK' }], {
+                cancelable: false,
+              });
             });
         })
         .catch(() => {
           this.setState({ loading: false });
-          Alert.alert(
-            'Error',
-            'Please check your internet connection or turn your GPS/Location on',
-            [{ text: 'OK' }],
-            {
-              cancelable: false,
-            },
-          );
+          Alert.alert('Error', 'Error getLatLong', [{ text: 'OK' }], {
+            cancelable: false,
+          });
         });
     }
   };

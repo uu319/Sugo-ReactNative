@@ -97,16 +97,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'black',
   },
   headerContainerStyle: {
     height: 60,
     width: '100%',
     justifyContent: 'center',
     paddingLeft: 20,
-    borderWidth: 1,
-    borderColor: 'black',
   },
   scrollViewStyle: {
     margin: 20,
@@ -114,14 +110,10 @@ const styles = StyleSheet.create({
   },
   profileContainerStyle: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: 'black',
   },
   detailsContainerStyle: {
     flex: 1.5,
     marginTop: 20,
-    borderWidth: 1,
-    borderColor: 'black',
   },
   footerContainerStyle: {
     height: 80,
@@ -129,20 +121,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 13,
     borderTopWidth: 0.5,
-    borderWidth: 1,
-    borderColor: 'black',
   },
   imageContainerStyle: {
     height: 110,
     width: 110,
     alignSelf: 'center',
-    borderWidth: 1,
-    borderColor: 'black',
   },
   nameContainerStyle: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: 'black',
   },
   imgStyle: {
     flex: 1,
@@ -168,14 +154,10 @@ const styles = StyleSheet.create({
   priceContainerStyle: {
     flex: 1.6,
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'black',
   },
   btnContainerStyle: {
     flex: 1,
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'black',
   },
   priceTextStyle: {
     fontSize: 30,

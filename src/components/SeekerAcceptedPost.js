@@ -6,13 +6,14 @@ import { MapView } from 'expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
 import { GLOBAL_STYLES, LOGO_URL, getMomentAgo } from './Constants';
-import MyModal from './SeekerSugoDetailsModal';
+import MyModal from './ViewSugoSlideUp';
 import Loading from './Loading';
+import Chat from './ChatModal';
 
 export default class AcceptedPost extends Component {
   constructor(props) {
     super(props);
-    this.state = { post: '', isModalVisible: false, momentAgo: '' };
+    this.state = { post: '', isSugoModalVisible: false, momentAgo: '', isMsgModalVisible: false };
   }
 
   componentWillReceiveProps(newProps) {
@@ -36,20 +37,64 @@ export default class AcceptedPost extends Component {
     const initialMilliseconds = initialTimeNow - timeStarted;
     this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
     if (post !== '') {
-      this.countdownInterval = setInterval(() => {
-        const timeNow = new Date().getTime();
-        const milliseconds = timeNow - timeStarted;
-        this.setState({ momentAgo: getMomentAgo(milliseconds) });
+      this.countdownInterval = setInterval(async () => {
+        const timeNow = await new Date().getTime();
+        if (timeNow) {
+          const milliseconds = timeNow - timeStarted;
+          this.setState({ momentAgo: getMomentAgo(milliseconds) });
+        }
       }, 60000);
     }
   };
 
-  showModal = () => {
-    this.setState({ isModalVisible: true });
+  renderStatus = () => {
+    const { post, momentAgo } = this.state;
+    if (post.metadata.status === 'accepted') {
+      return (
+        <View style={{ flexDirection: 'row' }}>
+          <AntDesign name="ellipsis1" size={14} color="white" />
+          <Text style={{ marginLeft: 5, color: 'white' }}>Waiting to start</Text>
+        </View>
+      );
+    }
+    if (post.metadata.status === 'started') {
+      return (
+        <View style={{ flexDirection: 'row' }}>
+          <Ionicons name="ios-timer" size={14} color="white" />
+          <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={{ flexDirection: 'row' }}>
+        <AntDesign name="ellipsis1" size={14} color="white" />
+        <Text style={{ marginLeft: 5, color: 'white' }}>Waiting for confirmation</Text>
+      </View>
+    );
+  };
+
+  showSugoModal = () => {
+    this.setState({ isSugoModalVisible: true });
   };
 
   hideModal = () => {
-    this.setState({ isModalVisible: false });
+    this.setState({ isSugoModalVisible: false });
+  };
+
+  showMsgModal = () => {
+    this.setState({ isMsgModalVisible: true });
+  };
+
+  hideMsgModal = () => {
+    this.setState({ isMsgModalVisible: false });
+  };
+
+  showFeedBackModal = () => {
+    this.setState({ isMsgModalVisible: true });
+  };
+
+  hideFeedBackModal = () => {
+    this.setState({ isMsgModalVisible: false });
   };
 
   onCancelSugo = async () => {
@@ -107,6 +152,13 @@ export default class AcceptedPost extends Component {
     }
   };
 
+  // {post.metadata.status === 'started' ? (
+  //   <View style={{ flexDirection: 'row' }}>
+  //     <Ionicons name="ios-timer" size={14} color="white" />
+  //     <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
+  //   </View>
+  // ) : null}
+
   renderLogo = () => {
     const { post } = this.props;
     const { metadata } = post;
@@ -133,16 +185,14 @@ export default class AcceptedPost extends Component {
   renderConfirmButton = () => {
     const { btnConfirmStyle } = styles;
     return (
-      <TouchableOpacity onPress={this.showModal} style={btnConfirmStyle}>
+      <TouchableOpacity onPress={this.showSugoModal} style={btnConfirmStyle}>
         <Text style={{ color: 'white' }}>View Sugo Details</Text>
       </TouchableOpacity>
     );
   };
 
   renderView() {
-    const { post, isModalVisible, momentAgo } = this.state;
-    const { postId } = post;
-    const { navProp } = this.props;
+    const { post, isSugoModalVisible, isMsgModalVisible } = this.state;
     const {
       img,
       imgContainer,
@@ -170,9 +220,10 @@ export default class AcceptedPost extends Component {
         <MyModal
           title={post.metadata.title}
           desc={post.metadata.desc}
-          isVisible={isModalVisible}
+          isVisible={isSugoModalVisible}
           hideModal={this.hideModal}
         />
+        <Chat postId={post.postId} isVisible={isMsgModalVisible} hideModal={this.hideMsgModal} />
         <View style={mapViewContainer}>
           <MapView
             style={mapView}
@@ -203,7 +254,7 @@ export default class AcceptedPost extends Component {
             </View>
             <View style={twinButtonContainer}>
               <TouchableOpacity
-                onPress={this.showModal}
+                onPress={this.showSugoModal}
                 style={[twinButtonStyle, { backgroundColor: '#29AB87' }]}
               >
                 <Text style={{ color: 'white', fontSize: 17 }}>View Detais</Text>
@@ -219,13 +270,7 @@ export default class AcceptedPost extends Component {
             <Text style={{ color: 'white', fontSize: 29, fontWeight: '300' }}>
               ₱{post.metadata.price}.00
             </Text>
-
-            {post.metadata.status === 'started' ? (
-              <View style={{ flexDirection: 'row' }}>
-                <Ionicons name="ios-timer" size={14} color="white" />
-                <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
-              </View>
-            ) : null}
+            {this.renderStatus()}
           </View>
           <View style={btnConfirmContainer}>
             {post.metadata.status === 'done' ? (
@@ -257,7 +302,8 @@ export default class AcceptedPost extends Component {
               <View style={messageIconContainer}>
                 {this.renderMessageBadge()}
                 <AntDesign
-                  onPress={() => navProp.navigate('ChatApp', { postId })}
+                  // onPress={() => navProp.navigate('ChatApp', { postId })}
+                  onPress={this.showMsgModal}
                   name="message1"
                   size={32}
                   color={GLOBAL_STYLES.BRAND_COLOR}

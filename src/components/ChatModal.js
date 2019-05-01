@@ -1,5 +1,3 @@
-/* @flow */
-
 import React, { Component } from 'react';
 import * as firebase from 'firebase';
 import {
@@ -14,31 +12,48 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Alert,
-  BackHandler,
   Image,
+  Platform
 } from 'react-native';
-import { Constants, ImagePicker, Permissions } from 'expo';
+import Modal from 'react-native-modal';
+import { Constants, ImagePicker, Notifications, Permissions } from 'expo';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import { Ionicons } from '@expo/vector-icons';
-import { timeTo12HrFormat, GLOBAL_STYLES } from '../components/Constants';
-import Loading from '../components/Loading';
+import { timeTo12HrFormat } from './Constants';
+import Loading from './Loading';
 
-export default class ChatApp extends Component {
+export default class Chat extends Component {
   constructor(props) {
     super(props);
     this.database = firebase.database();
     this.state = {
-      postId: props.navigation.getParam('postId', 'none'),
+      postId: props.postId,
       userId: '',
       textMessage: '',
       messageList: [],
       type: '',
-      image:'',
       loading: false,
     };
   }
 
   async componentDidMount() {
+    if (Platform.OS === 'android') {
+      Notifications.createChannelAndroidAsync('chat-messages', {
+        name: 'Chat messages',
+        sound: true,
+      });
+    }
+    // const result = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+    //
+    // if (Constants.isDevice && result.status === 'granted') {
+    //   console.log('Notification permissions granted.');
+    // }
+    //
+    // // If we want to do something with the notification when the app
+    // // is active, we need to listen to notification events and
+    // // handle them in a callback
+    // Notifications.addListener(this.handleNotification);
+
     const { postId } = this.state;
     const user = await AsyncStorage.getItem('user');
     const type = await AsyncStorage.getItem('type');
@@ -46,6 +61,9 @@ export default class ChatApp extends Component {
     const { uid } = parsedUser;
     this.setState({ userId: uid, type, loading: true });
     this.database.ref(`messages/${postId}`).on('child_added', value => {
+      if (!(value.val().from === uid)) {
+        this.testNotify();
+      }
       this.setState({ loading: false });
       this.setState(prevState => {
         return {
@@ -124,6 +142,19 @@ export default class ChatApp extends Component {
     }
   };
 
+  testNotify = () => {
+    const localNotification = {
+      title: 'New Message Received',
+      color: 'red',
+      android: {
+        channelId: 'chat-messages',
+        sound: true,
+      },
+    };
+
+    Notifications.presentLocalNotificationAsync(localNotification);
+  };
+
   sendMessage = async (msgType, msg) => {
     const { postId, userId, type } = this.state;
     if (msg.length > 0) {
@@ -176,22 +207,24 @@ export default class ChatApp extends Component {
         </Text>
       </View>
     ) : (
-      <View
-        style={{
-          width: '60%',
-          height: 150,
-          alignSelf: item.from === userId ? 'flex-end' : 'flex-start',
-          borderRadius: 5,
-          borderColor: 'gray',
-          borderWidth: 0.5,
-          marginTop: 4,
-        }}
-      >
-        <Image
-          resizeMode="contain"
-          source={{ uri: item.message }}
-          style={{ flex: 1, width: null, height: null, borderRadius: 5 }}
-        />
+      <View style={{ flex: 1, margin: 10 }}>
+        <View
+          style={{
+            width: '60%',
+            height: 150,
+            alignSelf: item.from === userId ? 'flex-end' : 'flex-start',
+            borderRadius: 5,
+            borderColor: 'gray',
+            borderWidth: 0.5,
+            marginTop: 4,
+          }}
+        >
+          <Image
+            resizeMode="contain"
+            source={{ uri: item.message }}
+            style={{ flex: 1, width: null, height: null, borderRadius: 5 }}
+          />
+        </View>
         <Text
           style={{
             color: '#828282',
@@ -222,9 +255,7 @@ export default class ChatApp extends Component {
   };
 
   onBackPress = () => {
-    const { navigation } = this.props;
     const { type, postId } = this.state;
-    navigation.goBack();
     console.log('back', postId);
     console.log('type', type);
     const updates = {};
@@ -237,7 +268,7 @@ export default class ChatApp extends Component {
   };
 
   render() {
-    const { textMessage, messageList } = this.state;
+    const { textMessage } = this.state;
     const {
       container,
       inputStyle,
@@ -245,34 +276,50 @@ export default class ChatApp extends Component {
       inputContainerStyle,
       headerContainerStyle,
     } = styles;
+    const { hideModal, isVisible } = this.props;
     return (
-      <SafeAreaView style={container}>
-        <View style={headerContainerStyle}>
-          <Ionicons onPress={this.onBackPress} name="ios-arrow-back" size={40} color="#BDBDBD" />
-        </View>
-        {this.renderFlatList()}
-        <KeyboardAvoidingView
-          style={inputContainerStyle}
-          keyboardVerticalOffset={14}
-          behavior="padding"
-        >
-          <TouchableOpacity onPress={this._pickImage} style={sendButtonStyle}>
-            <Ionicons name="md-photos" size={32} color="black" />
-          </TouchableOpacity>
-          <TextInput
-            style={inputStyle}
-            value={textMessage}
-            placeHolder="Type message"
-            onChangeText={this.handleChange('textMessage')}
-          />
-          <TouchableOpacity
-            onPress={() => this.sendMessage('text', textMessage)}
-            style={sendButtonStyle}
+      <Modal
+        animationOut="slideOutLeft"
+        isVisible={isVisible}
+        style={{ margin: 0, backgroundColor: 'white' }}
+      >
+        <SafeAreaView style={container}>
+          <View style={headerContainerStyle}>
+            <Text style={{ fontSize: 30 }}>Chats</Text>
+            <Ionicons
+              onPress={() => {
+                this.onBackPress();
+                hideModal();
+              }}
+              name="ios-arrow-back"
+              size={40}
+              color="#BDBDBD"
+            />
+          </View>
+          {this.renderFlatList()}
+          <KeyboardAvoidingView
+            style={inputContainerStyle}
+            keyboardVerticalOffset={-200}
+            behavior="padding"
           >
-            <Ionicons name="md-send" size={32} color="black" />
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+            <TouchableOpacity onPress={this._pickImage} style={sendButtonStyle}>
+              <Ionicons name="md-photos" size={32} color="black" />
+            </TouchableOpacity>
+            <TextInput
+              style={inputStyle}
+              value={textMessage}
+              placeHolder="Type message"
+              onChangeText={this.handleChange('textMessage')}
+            />
+            <TouchableOpacity
+              onPress={() => this.sendMessage('text', textMessage)}
+              style={sendButtonStyle}
+            >
+              <Ionicons name="md-send" size={32} color="black" />
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
     );
   }
 }
@@ -287,9 +334,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     padding: 10,
-    borderTopWidth: 0.5,
-    borderColor: 'gray',
-    backgroundColor: GLOBAL_STYLES.BRAND_COLOR
+    backgroundColor: '#dddddd',
   },
   inputStyle: {
     padding: 10,

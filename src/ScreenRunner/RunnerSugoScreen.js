@@ -1,7 +1,15 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { StyleSheet, FlatList, SafeAreaView, AsyncStorage, View, Image } from 'react-native';
+import {
+  StyleSheet,
+  FlatList,
+  SafeAreaView,
+  AsyncStorage,
+  BackHandler,
+  View,
+  Image,
+} from 'react-native';
 import * as firebase from 'firebase';
 import _ from 'lodash';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
@@ -22,9 +30,14 @@ export default class RunnerSugoScreen extends Component {
   }
 
   componentDidMount() {
+    BackHandler.addEventListener('hardwareBackPress', this.onBackButtonPressAndroid);
     this.listenPosts();
     this.listenUser();
   }
+
+  onBackButtonPressAndroid = () => {
+    return true;
+  };
 
   listenPosts = () => {
     this.database

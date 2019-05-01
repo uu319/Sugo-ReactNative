@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { AsyncStorage, Image, View, Alert } from 'react-native';
-import { GoogleSignIn, Constants } from 'expo';
+import { GoogleSignIn, Constants, Permissions, Notifications } from 'expo';
 import * as firebase from 'firebase';
 import _ from 'lodash';
 import { Button, Spinner } from '../components/common';
@@ -10,31 +10,50 @@ if (isInClient) {
   GoogleSignIn.allowInClient();
 }
 
-// const clientIdForUseInTheExpoClient =
-//   '603386649315-vp4revvrcgrcjme51ebuhbkbspl048l9.apps.googleusercontent.com';
-//
-// const yourClientIdForUseInStandalone = Platform.select({
-//   android: '157851373513-mj1d6fddp29k29tn2uiedpke4vhcth13.apps.googleusercontent.com',
-//   ios: '93206224262-6vujqo0h2uiqg74necvl44lh51nor80d.apps.googleusercontent.com',
-// });
-//
-// const clientId = isInClient ? clientIdForUseInTheExpoClient : yourClientIdForUseInStandalone;
-
 class Login extends Component {
   constructor(props) {
     super(props);
     this.database = firebase.database();
     this.state = {
       loading: false,
+      token: '',
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     GoogleSignIn.allowInClient();
+    await this.getUserToken();
     this.initAsync();
   }
 
-  // : '93206224262-6vujqo0h2uiqg74necvl44lh51nor80d.apps.googleusercontent.com',
+  getUserToken = async () => {
+    const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+    let finalStatus = existingStatus;
+
+    // only ask if permissions have not already been determined, because
+    // iOS won't necessarily prompt the user a second time.
+    if (existingStatus !== 'granted') {
+      // Android remote notification permissions are granted during the app
+      // install, so this will only ask on iOS
+      const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+      finalStatus = status;
+    }
+
+    // Stop here if the user did not grant permissions
+    if (finalStatus !== 'granted') {
+      return '';
+    }
+    try {
+      const token = await Notifications.getExpoPushTokenAsync();
+      this.setState({ token });
+      // await this.database.ref(`users/${uid}/token`).set(token);
+      // this.setState({ userToken: token });
+    } catch (e) {
+      console.log('error');
+    }
+    return '';
+  };
+
   initAsync = async () => {
     try {
       await GoogleSignIn.initAsync({
@@ -52,12 +71,6 @@ class Login extends Component {
       await GoogleSignIn.askForPlayServicesAsync();
       const { type, user } = await GoogleSignIn.signInAsync();
       if (type === 'success') {
-        Alert.alert(
-          'user',
-          JSON.stringify(user),
-          // `${user.uid}, ${user.displayName}, ${user.lastName}, ${user.firstName}, ${user.photoURL}`,
-        );
-        this.setState({ loading: true });
         const { uid } = user;
         this.database.ref(`users/${uid}`).once('value', snapshot => {
           if (!snapshot.exists()) {
@@ -91,6 +104,7 @@ class Login extends Component {
 
   storeUserToFirebase = async user => {
     const { email, uid, firstName, lastName, displayName, photoURL } = user;
+    const { token } = this.state;
     try {
       await this.database.ref(`users/${uid}`).set({
         userId: uid,
@@ -101,6 +115,7 @@ class Login extends Component {
         displayName,
         currentPost: '',
         currentPostStatus: 'none',
+        token,
       });
     } catch (e) {
       this.setState({ loading: false });
@@ -118,28 +133,6 @@ class Login extends Component {
       Alert.alert('error on storeUserToFirebase');
     }
   };
-
-  // signIn = async () => {
-  //   this.setState({ loading: true });
-  //   try {
-  //     const result = await Google.logInAsync(googleSigninConfig);
-  //     if (result.type === 'success') {
-  //       const { id } = result.user;
-  //       this.database.ref(`users/${id}`).once('value', snapshot => {
-  //         if (!snapshot.exists()) {
-  //           this.storeUserToFirebase(result.user);
-  //         }
-  //         this.storeUserToLocalStorage(result.user);
-  //       });
-  //     } else {
-  //       this.setState({ loading: false });
-  //       console.log('cancelled');
-  //     }
-  //   } catch (e) {
-  //     this.setState({ loading: false });
-  //     Alert.alert('error on signIn');
-  //   }
-  // };
 
   renderButton() {
     const { loading } = this.state;

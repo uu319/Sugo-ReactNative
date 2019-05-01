@@ -4,13 +4,14 @@ import { MapView } from 'expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
 import { GLOBAL_STYLES, LOGO_URL, getMomentAgo, renderSugoLogo } from './Constants';
-import MyModal from './SeekerSugoDetailsModal';
+import MyModal from './ViewSugoSlideUp';
 import Loading from './Loading';
+import Chat from './ChatModal';
 
 export default class CurrentSugo extends Component {
   constructor(props) {
     super(props);
-    this.state = { post: '', isModalVisible: false, momentAgo: '' };
+    this.state = { post: '', isModalVisible: false, momentAgo: '', isMsgModalVisible: false };
   }
 
   componentWillReceiveProps(newProps) {
@@ -34,18 +35,29 @@ export default class CurrentSugo extends Component {
     this.setState({ isModalVisible: false });
   };
 
+  showMsgModal = () => {
+    this.setState({ isMsgModalVisible: true });
+  };
+
+  hideMsgModal = () => {
+    this.setState({ isMsgModalVisible: false });
+  };
+
   renderMomentAgo = () => {
     const { post } = this.state;
     const { metadata } = post;
     const { timeStarted } = metadata;
     const initialTimeNow = new Date().getTime();
-    const initialMilliseconds = initialTimeNow - timeStarted;
+    let initialMilliseconds = initialTimeNow - timeStarted;
     this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
     if (post !== '') {
-      this.countdownInterval = setInterval(() => {
-        const timeNow = new Date().getTime();
-        const milliseconds = timeNow - timeStarted;
-        this.setState({ momentAgo: getMomentAgo(milliseconds) });
+      this.countdownInterval = setInterval(async () => {
+        const timeNow = await new Date().getTime();
+        console.log('timeNow', timeNow);
+        if (timeNow) {
+          initialMilliseconds += 60000;
+          this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
+        }
       }, 60000);
     }
   };
@@ -74,6 +86,32 @@ export default class CurrentSugo extends Component {
     }
   };
 
+  renderStatus = () => {
+    const { post, momentAgo } = this.state;
+    if (post.metadata.status === 'accepted') {
+      return (
+        <View style={{ flexDirection: 'row' }}>
+          <AntDesign name="ellipsis1" size={14} color="white" />
+          <Text style={{ marginLeft: 5, color: 'white' }}>Waiting to start</Text>
+        </View>
+      );
+    }
+    if (post.metadata.status === 'started') {
+      return (
+        <View style={{ flexDirection: 'row' }}>
+          <Ionicons name="ios-timer" size={14} color="white" />
+          <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={{ flexDirection: 'row' }}>
+        <AntDesign name="ellipsis1" size={14} color="white" />
+        <Text style={{ marginLeft: 5, color: 'white' }}>Waiting for confirmation</Text>
+      </View>
+    );
+  };
+
   renderBtnToggle = () => {
     const { post } = this.state;
     const { btnToggleStyle } = styles;
@@ -95,8 +133,7 @@ export default class CurrentSugo extends Component {
   };
 
   renderView() {
-    const { post, isModalVisible, momentAgo } = this.state;
-    const { navProp } = this.props;
+    const { post, isModalVisible, isMsgModalVisible } = this.state;
     const {
       img,
       imgContainer,
@@ -125,6 +162,7 @@ export default class CurrentSugo extends Component {
           isVisible={isModalVisible}
           hideModal={this.hideModal}
         />
+        <Chat postId={post.postId} isVisible={isMsgModalVisible} hideModal={this.hideMsgModal} />
         <View style={mapViewContainer}>
           <MapView
             style={mapView}
@@ -167,12 +205,7 @@ export default class CurrentSugo extends Component {
                 ₱{post.metadata.price}.00
               </Text>
 
-              {post.metadata.status === 'started' ? (
-                <View style={{ flexDirection: 'row' }}>
-                  <Ionicons name="ios-timer" size={14} color="white" />
-                  <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
-                </View>
-              ) : null}
+              {this.renderStatus()}
             </View>
             <View style={btnToggleContainer}>{this.renderBtnToggle()}</View>
           </View>
@@ -199,7 +232,7 @@ export default class CurrentSugo extends Component {
               <View style={messageIconContainer}>
                 {this.renderMessageBadge()}
                 <AntDesign
-                  onPress={() => navProp.navigate('ChatApp', { postId: post.postId })}
+                  onPress={this.showMsgModal}
                   name="message1"
                   size={32}
                   color={GLOBAL_STYLES.BRAND_COLOR}

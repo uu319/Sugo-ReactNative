@@ -1,6 +1,6 @@
 import React from 'react';
 import * as firebase from 'firebase';
-import { BackAndroid } from 'react-native';
+import { BackHandler } from 'react-native';
 import { AppLoading, Asset, Font } from 'expo';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons, AntDesign } from '@expo/vector-icons';
 import SwitchNav from './src/navigators/MainNav';

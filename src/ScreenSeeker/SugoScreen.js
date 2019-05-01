@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackAndroid } from 'react-native';
+import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackHandler } from 'react-native';
 import * as firebase from 'firebase';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import PendingPost from '../components/SeekerPendingPost';
@@ -28,14 +28,16 @@ export default class Sugo extends Component {
   }
 
   componentDidMount() {
+    BackHandler.addEventListener('hardwareBackPress', this.onBackButtonPressAndroid);
     this.listenUser();
-    BackAndroid.removeEventListener('hardwareBackPress');
   }
 
-  listenPost = currentPost => {
-    this.database.ref(`posts/${currentPost}`).on('value', post => {
-      this.setState({ currentPostObject: post.val() });
-    });
+  componentWillUnmount() {
+    BackHandler.removeEventListener('hardwareBackPress', this.handleBackPress);
+  }
+
+  onBackButtonPressAndroid = () => {
+    return true;
   };
 
   listenUser = async () => {
@@ -43,12 +45,13 @@ export default class Sugo extends Component {
     const parsedUser = JSON.parse(user);
     const { uid } = parsedUser;
     this.database.ref(`users/${uid}`).on('value', async snapshot => {
-      const { currentPostStatus, currentPost } = snapshot.val();
+      const { currentPostStatus, currentPost, token } = snapshot.val();
       this.setState({
         userInfo: snapshot.val(),
         uid,
         currentPostStatus,
         currentPostId: currentPost,
+        token,
       });
       if (
         currentPostStatus === 'accepted' ||
@@ -61,8 +64,14 @@ export default class Sugo extends Component {
     });
   };
 
+  listenPost = currentPost => {
+    this.database.ref(`posts/${currentPost}`).on('value', post => {
+      this.setState({ currentPostObject: post.val() });
+    });
+  };
+
   onCatPress = catName => {
-    const { imageUri, userInfo, uid } = this.state;
+    const { imageUri, userInfo, uid, token } = this.state;
     const { displayName, email, photoURL } = userInfo;
     const { navigation } = this.props;
     const { navigate } = navigation;
@@ -73,6 +82,7 @@ export default class Sugo extends Component {
       email,
       imageUri,
       catName,
+      token,
     };
     navigate('AddPostScreen', {
       params,
