@@ -9,6 +9,7 @@ import {
   BackHandler,
   View,
   Image,
+  Text,
 } from 'react-native';
 import * as firebase from 'firebase';
 import _ from 'lodash';
@@ -22,10 +23,10 @@ export default class RunnerSugoScreen extends Component {
     super(props);
     this.database = firebase.database();
     this.state = {
-      posts: {},
+      posts: [],
       userInfo: '',
       currentPostStatus: 'loading',
-      // currentPostObject: {},
+      currentPostObject: {},
     };
   }
 
@@ -46,7 +47,6 @@ export default class RunnerSugoScreen extends Component {
       .equalTo('pending')
       .on('value', posts => {
         const postArray = _.values(posts.val());
-        console.log('postsArray', postArray);
         this.setState({ posts: postArray });
       });
   };
@@ -86,18 +86,31 @@ export default class RunnerSugoScreen extends Component {
     const { navigation } = this.props;
     const { headerContainer, headerImageStyle, headerImageContainer } = styles;
     return (
-      <View syle={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         <View style={headerContainer}>
           <View style={headerImageContainer}>
             <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
           </View>
         </View>
-        <FlatList
-          data={posts}
-          renderItem={this.renderSugoList}
-          navProp={navigation}
-          keyExtractor={item => item.postId}
-        />
+        {posts.length > 0 ? (
+          <FlatList
+            data={posts}
+            renderItem={this.renderSugoList}
+            navProp={navigation}
+            keyExtractor={item => item.postId}
+          />
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Image source={require('../myassets/bike.png')} style={{ height: 100, width: 100 }} />
+            <Text style={{ fontSize: 30, color: '#dddddd' }}>Empty</Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -111,13 +124,11 @@ export default class RunnerSugoScreen extends Component {
     if (currentPostStatus === 'none') {
       return this.renderFlatList();
     }
-    // return null;
     return <CurrentSugo navProp={navigation} post={currentPostObject} />;
   };
 
   render() {
     const { container } = styles;
-    // console.log('posttttttt', this.state.currentPostObject);
     return <SafeAreaView style={container}>{this.renderBody()}</SafeAreaView>;
   }
 }

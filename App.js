@@ -1,8 +1,14 @@
 import React from 'react';
 import * as firebase from 'firebase';
-import { BackHandler } from 'react-native';
-import { AppLoading, Asset, Font } from 'expo';
-import { Ionicons, MaterialCommunityIcons, MaterialIcons, AntDesign } from '@expo/vector-icons';
+import { AppLoading, Asset, Font, Notifications } from 'expo';
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  MaterialIcons,
+  AntDesign,
+  FontAwesome,
+  Alert,
+} from '@expo/vector-icons';
 import SwitchNav from './src/navigators/MainNav';
 import { firebaseConfig } from './src/components/Constants';
 
@@ -31,9 +37,17 @@ export default class App extends React.Component {
     // const iosSearch = Font.loadAsync([Ionicons['ios-search']]);
     const ionIcons = this.cacheFonts([Ionicons.font]);
     const materialIconsCommunity = this.cacheFonts([MaterialCommunityIcons.font]);
+    const fontAwesome = this.cacheFonts([FontAwesome.font]);
     const materialIcons = this.cacheFonts([MaterialIcons.font]);
     const antDesign = this.cacheFonts([AntDesign.font]);
-    return Promise.all([imageAssets, ionIcons, materialIconsCommunity, materialIcons, antDesign]);
+    return Promise.all([
+      imageAssets,
+      ionIcons,
+      materialIconsCommunity,
+      materialIcons,
+      antDesign,
+      fontAwesome,
+    ]);
   };
 
   _handleLoadingError = error => {

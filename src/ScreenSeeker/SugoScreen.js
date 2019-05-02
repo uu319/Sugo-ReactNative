@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackHandler } from 'react-native';
+import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackHandler, Alert } from 'react-native';
+import { Notifications } from 'expo';
 import * as firebase from 'firebase';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import PendingPost from '../components/SeekerPendingPost';
@@ -29,12 +30,17 @@ export default class Sugo extends Component {
 
   componentDidMount() {
     BackHandler.addEventListener('hardwareBackPress', this.onBackButtonPressAndroid);
+    // this._notificationSubscription = Notifications.addListener(this._handleNotification);
     this.listenUser();
   }
 
   componentWillUnmount() {
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackPress);
   }
+
+  // _handleNotification = notification => {
+  //
+  // };
 
   onBackButtonPressAndroid = () => {
     return true;

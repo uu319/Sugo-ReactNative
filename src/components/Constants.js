@@ -1,3 +1,6 @@
+import { Alert } from 'react-native';
+import { Location, Permissions } from 'expo';
+
 export const firebaseConfig = {
   apiKey: 'AIzaSyAh5Xa9P-6vpzMMML1Y-55Pt71M8cfED8I',
   authDomain: 'sugoph-11fb0.firebaseapp.com',
@@ -115,4 +118,27 @@ export function sendNotification(token, title, body) {
       body,
     }),
   });
+}
+
+export async function getLatLongAsync() {
+  const { status } = await Permissions.askAsync(Permissions.LOCATION);
+  if (status === 'granted') {
+    try {
+      const location = await Location.getCurrentPositionAsync({});
+      return location;
+    } catch {
+      Alert.alert('Error', 'Something went wrong, please try again.');
+    }
+  }
+  return null;
+}
+
+export async function getAddressByLatLong(longitude, latitude) {
+  try {
+    const address = await Location.reverseGeocodeAsync({ longitude, latitude });
+    return address;
+  } catch {
+    Alert.alert('Error', 'Something went wrong, please try again.');
+  }
+  return null;
 }

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { MapView } from 'expo';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign, Ionicons, FontAwesome } from '@expo/vector-icons';
 import * as firebase from 'firebase';
 import {
   GLOBAL_STYLES,
@@ -9,6 +9,7 @@ import {
   getMomentAgo,
   renderSugoLogo,
   sendNotification,
+  getLatLongAsync,
 } from './Constants';
 import MyModal from './ViewSugoSlideUp';
 import Loading from './Loading';
@@ -59,9 +60,8 @@ export default class CurrentSugo extends Component {
     if (post !== '') {
       this.countdownInterval = setInterval(async () => {
         const timeNow = await new Date().getTime();
-        console.log('timeNow', timeNow);
         if (timeNow) {
-          initialMilliseconds += 60000;
+          initialMilliseconds += 65000;
           this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
         }
       }, 60000);
@@ -95,6 +95,53 @@ export default class CurrentSugo extends Component {
     } catch (e) {
       Alert.alert('Error', 'Please check your internet connection');
     }
+  };
+
+  updateLocation = () => {
+    const database = firebase.database();
+    const { post } = this.state;
+    const { postId, seeker, runner } = post;
+    const { seekerToken } = seeker;
+    const { displayName } = runner;
+    const updates = {};
+    Alert.alert(
+      `Hi ${displayName}`,
+      'Update your location so your seeker can locate you?',
+      [
+        {
+          text: 'OK',
+          onPress: async () => {
+            getLatLongAsync()
+              .then(async loc => {
+                const { longitude, latitude } = loc.coords;
+                updates[`/posts/${postId}/runner/lat`] = latitude;
+                updates[`/posts/${postId}/runner/long`] = longitude;
+                try {
+                  await database.ref().update(updates);
+                  sendNotification(seekerToken, 'Notice', 'Your runner updated location!');
+                  Alert.alert('Success', 'You have succesfully updated your location!');
+                } catch (e) {
+                  Alert.alert('Error', 'Please check your internet connection');
+                }
+              })
+              .catch(() => {
+                Alert.alert(
+                  'Fetching location failed',
+                  'Please turn on your location.',
+                  [{ text: 'OK' }],
+                  {
+                    cancelable: false,
+                  },
+                );
+              });
+          },
+        },
+        { text: 'Cancel' },
+      ],
+      {
+        cancelable: false,
+      },
+    );
   };
 
   renderStatus = () => {
@@ -153,9 +200,8 @@ export default class CurrentSugo extends Component {
       sugoNameContainer,
       messageIconContainer,
       seekerRowContainer,
-      twinButtonRowContainer,
-      twinButtonContainer,
-      twinButtonStyle,
+      floatingButtonRowContainer,
+      viewDetailsButtonStyle,
       mapView,
       mapViewContainer,
       nameTextStyle,
@@ -163,6 +209,8 @@ export default class CurrentSugo extends Component {
       logoImageStyle,
       logoImageContainer,
       btnToggleContainer,
+      seekerTextStyle,
+      updateLocationButtonStyle,
     } = styles;
 
     return !(post === '') ? (
@@ -173,7 +221,12 @@ export default class CurrentSugo extends Component {
           isVisible={isModalVisible}
           hideModal={this.hideModal}
         />
-        <Chat postId={post.postId} isVisible={isMsgModalVisible} hideModal={this.hideMsgModal} />
+        <Chat
+          post={post}
+          postId={post.postId}
+          isVisible={isMsgModalVisible}
+          hideModal={this.hideMsgModal}
+        />
         <View style={mapViewContainer}>
           <MapView
             style={mapView}
@@ -193,15 +246,13 @@ export default class CurrentSugo extends Component {
               />
             </MapView.Marker>
           </MapView>
-          <View style={twinButtonRowContainer}>
-            <View style={twinButtonContainer}>
-              <TouchableOpacity
-                onPress={this.showModal}
-                style={[twinButtonStyle, { backgroundColor: '#29AB87' }]}
-              >
-                <Text style={{ color: 'white', fontSize: 17 }}>View Detais</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={floatingButtonRowContainer}>
+            <TouchableOpacity onPress={this.showModal} style={viewDetailsButtonStyle}>
+              <Text style={{ color: 'white', fontSize: 17 }}>View Details</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={this.updateLocation} style={updateLocationButtonStyle}>
+              <FontAwesome name="location-arrow" size={26} color="white" />
+            </TouchableOpacity>
           </View>
           <View style={detailContainer}>
             <View style={logoImageContainer}>
@@ -237,7 +288,7 @@ export default class CurrentSugo extends Component {
                   <Text style={nameTextStyle}>{post.seeker.displayName}</Text>
                 </View>
                 <View style={sugoNameContainer}>
-                  <Text>Seeker</Text>
+                  <Text style={seekerTextStyle}>Seeker</Text>
                 </View>
               </View>
               <View style={messageIconContainer}>
@@ -279,7 +330,6 @@ export default class CurrentSugo extends Component {
   };
 
   render() {
-    console.log(this.props);
     return <View style={{ flex: 1 }}>{this.renderView()}</View>;
   }
 }
@@ -346,6 +396,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingTop: 4,
   },
+  seekerTextStyle: {
+    color: '#828282',
+  },
   messageIconContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -371,23 +424,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 4,
   },
-  twinButtonRowContainer: {
+  floatingButtonRowContainer: {
     flexDirection: 'row',
     width: '100%',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
   twinButtonContainer: {
     width: '28%',
-    height: 35,
+    height: 70,
     marginVertical: 10,
   },
-  twinButtonStyle: {
+  viewDetailsButtonStyle: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 6,
-    width: '100%',
+    backgroundColor: '#29AB87',
+    marginBottom: 20,
+    marginLeft: 30,
+    width: '30%',
     height: 30,
+  },
+  updateLocationButtonStyle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
+    borderRadius: 30,
+    marginBottom: 12,
+    marginRight: 20,
+    width: 60,
+    height: 60,
   },
   btnToggleContainer: {
     flex: 1.5,

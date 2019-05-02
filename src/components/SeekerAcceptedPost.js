@@ -3,9 +3,15 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Image, Alert, TouchableOpacity } from 'react-native';
 import { MapView } from 'expo';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign, Ionicons, FontAwesome } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES, LOGO_URL, getMomentAgo, sendNotification } from './Constants';
+import {
+  GLOBAL_STYLES,
+  LOGO_URL,
+  getMomentAgo,
+  sendNotification,
+  getLatLongAsync,
+} from './Constants';
 import MyModal from './ViewSugoSlideUp';
 import Loading from './Loading';
 import Chat from './ChatModal';
@@ -13,7 +19,12 @@ import Chat from './ChatModal';
 export default class AcceptedPost extends Component {
   constructor(props) {
     super(props);
-    this.state = { post: '', isSugoModalVisible: false, momentAgo: '', isMsgModalVisible: false };
+    this.state = {
+      post: '',
+      isSugoModalVisible: false,
+      momentAgo: '',
+      isMsgModalVisible: false,
+    };
   }
 
   componentWillReceiveProps(newProps) {
@@ -34,14 +45,14 @@ export default class AcceptedPost extends Component {
     const { metadata } = post;
     const { timeStarted } = metadata;
     const initialTimeNow = new Date().getTime();
-    const initialMilliseconds = initialTimeNow - timeStarted;
+    let initialMilliseconds = initialTimeNow - timeStarted;
     this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
     if (post !== '') {
       this.countdownInterval = setInterval(async () => {
         const timeNow = await new Date().getTime();
         if (timeNow) {
-          const milliseconds = timeNow - timeStarted;
-          this.setState({ momentAgo: getMomentAgo(milliseconds) });
+          initialMilliseconds += 62000;
+          this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
         }
       }, 60000);
     }
@@ -137,7 +148,7 @@ export default class AcceptedPost extends Component {
     const { post, momentAgo } = this.state;
     const { postId, runner, seeker } = post;
     const { seekerId } = seeker;
-    const { runnerId } = runner;
+    const { runnerId, runnerToken } = runner;
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = 'confirmed';
     updates[`/posts/${postId}/metadata/momentAgo`] = momentAgo;
@@ -145,20 +156,112 @@ export default class AcceptedPost extends Component {
     updates[`/users/${seekerId}/currentPost`] = '';
     updates[`/users/${runnerId}/currentPostStatus`] = 'none';
     updates[`/users/${runnerId}/currentPost`] = '';
-    const database = firebase.database();
-    try {
-      await database.ref().update(updates);
-    } catch (e) {
-      Alert.alert('Error', 'Please check your internet connection');
-    }
+    Alert.alert(
+      'Thank you.',
+      'Good to have served yoo.',
+      [
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              const database = firebase.database();
+              try {
+                await database.ref().update(updates);
+              } catch (e) {
+                Alert.alert('Error', 'Please check your internet connection');
+              }
+              sendNotification(
+                runnerToken,
+                'Hooray!',
+                'Your seeker confirmed the transaction as done.',
+              );
+            } catch (e) {
+              Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
+                cancelable: false,
+              });
+            }
+          },
+        },
+        { text: 'Cancel' },
+      ],
+      {
+        cancelable: false,
+      },
+    );
   };
 
-  // {post.metadata.status === 'started' ? (
-  //   <View style={{ flexDirection: 'row' }}>
-  //     <Ionicons name="ios-timer" size={14} color="white" />
-  //     <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
-  //   </View>
-  // ) : null}
+  updateLocation = () => {
+    const database = firebase.database();
+    const { post } = this.state;
+    const { postId, runner, seeker } = post;
+    const { displayName } = seeker;
+    const { runnerToken } = runner;
+    const updates = {};
+    Alert.alert(
+      `Hi ${displayName}`,
+      'Update your location so your seeker can locate you?',
+      [
+        {
+          text: 'OK',
+          onPress: async () => {
+            getLatLongAsync()
+              .then(async loc => {
+                const { longitude, latitude } = loc.coords;
+                updates[`/posts/${postId}/runner/lat`] = latitude;
+                updates[`/posts/${postId}/runner/long`] = longitude;
+                try {
+                  await database.ref().update(updates);
+                  sendNotification(runnerToken, 'Notice', 'Your runner updated location!');
+                  Alert.alert('Success', 'You have succesfully updated your location!');
+                } catch (e) {
+                  Alert.alert('Error', 'Please check your internet connection');
+                }
+              })
+              .catch(() => {
+                Alert.alert(
+                  'Fetching location failed',
+                  'Please turn on your location.',
+                  [{ text: 'OK' }],
+                  {
+                    cancelable: false,
+                  },
+                );
+              });
+          },
+        },
+        { text: 'Cancel' },
+      ],
+      {
+        cancelable: false,
+      },
+    );
+  };
+
+  updateLocation = () => {
+    const database = firebase.database();
+    const { post } = this.state;
+    const { postId, runner } = post;
+    const { runnerToken } = runner;
+    const updates = {};
+    getLatLongAsync()
+      .then(async loc => {
+        const { longitude, latitude } = loc.coords;
+        updates[`/posts/${postId}/seeker/lat`] = latitude;
+        updates[`/posts/${postId}/seeker/long`] = longitude;
+        try {
+          await database.ref().update(updates);
+          sendNotification(runnerToken, 'Notice', 'Your seeker updated location!');
+          Alert.alert('Success', 'You have succesfully updated your location!');
+        } catch (e) {
+          Alert.alert('Error', 'Please check your internet connection');
+        }
+      })
+      .catch(() => {
+        Alert.alert('Fetching location failed', 'Please turn on your location.', [{ text: 'OK' }], {
+          cancelable: false,
+        });
+      });
+  };
 
   renderLogo = () => {
     const { post } = this.props;
@@ -166,7 +269,6 @@ export default class AcceptedPost extends Component {
     const { title } = metadata;
     if (title === 'Grocery') {
       return require('../myassets/sugoGrocery.png');
-      // this.setState({ uri: require('../myassets/sugoGrocery.png') });
     }
     if (title === 'Pickup / Delivery') {
       return require('../myassets/sugoDelivery.png');
@@ -214,6 +316,7 @@ export default class AcceptedPost extends Component {
       twinButtonContainer,
       twinButtonRowContainer,
       btnConfirmContainer,
+      updateLocationButtonStyle,
     } = styles;
 
     return !(post === '') ? (
@@ -224,7 +327,12 @@ export default class AcceptedPost extends Component {
           isVisible={isSugoModalVisible}
           hideModal={this.hideModal}
         />
-        <Chat postId={post.postId} isVisible={isMsgModalVisible} hideModal={this.hideMsgModal} />
+        <Chat
+          post={post}
+          postId={post.postId}
+          isVisible={isMsgModalVisible}
+          hideModal={this.hideMsgModal}
+        />
         <View style={mapViewContainer}>
           <MapView
             style={mapView}
@@ -258,9 +366,12 @@ export default class AcceptedPost extends Component {
                 onPress={this.showSugoModal}
                 style={[twinButtonStyle, { backgroundColor: '#29AB87' }]}
               >
-                <Text style={{ color: 'white', fontSize: 17 }}>View Detais</Text>
+                <Text style={{ color: 'white', fontSize: 17 }}>View Details</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity onPress={this.updateLocation} style={updateLocationButtonStyle}>
+              <FontAwesome name="location-arrow" size={26} color="white" />
+            </TouchableOpacity>
           </View>
         </View>
         <View style={detailContainer}>
@@ -430,13 +541,25 @@ const styles = StyleSheet.create({
   twinButtonRowContainer: {
     flexDirection: 'row',
     width: '100%',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'flex-end',
+    paddingHorizontal: 13,
   },
   twinButtonContainer: {
     width: '28%',
-    height: 35,
+    height: 70,
+    justifyContent: 'flex-end',
     marginVertical: 10,
+  },
+  updateLocationButtonStyle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
+    borderRadius: 30,
+    marginBottom: 12,
+    marginRight: 7,
+    width: 60,
+    height: 60,
   },
   twinButtonStyle: {
     alignItems: 'center',

@@ -15,15 +15,15 @@ const RunnerTabNavigator = createAppContainer(
           tabBarIcon: ({ tintColor }) => <Ionicons name="ios-search" color={tintColor} size={21} />,
         },
       },
-      About: {
-        screen: About,
-        navigationOptions: {
-          tabBarLabel: 'ABOUT',
-          tabBarIcon: ({ tintColor }) => (
-            <MaterialCommunityIcons name="information-outline" color={tintColor} size={21} />
-          ),
-        },
-      },
+      // About: {
+      //   screen: About,
+      //   navigationOptions: {
+      //     tabBarLabel: 'ABOUT',
+      //     tabBarIcon: ({ tintColor }) => (
+      //       <MaterialCommunityIcons name="information-outline" color={tintColor} size={21} />
+      //     ),
+      //   },
+      // },
       Profile: {
         screen: Profile,
         navigationOptions: {

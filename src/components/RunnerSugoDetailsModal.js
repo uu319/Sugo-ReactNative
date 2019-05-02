@@ -120,7 +120,8 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     padding: 13,
-    borderTopWidth: 0.5,
+    elevation: 2,
+    backgroundColor: '#dddddd',
   },
   imageContainerStyle: {
     height: 110,
@@ -143,7 +144,6 @@ const styles = StyleSheet.create({
   },
   sugoTextStyle: {
     fontSize: 18,
-    alignSelf: 'center',
     fontWeight: '300',
     color: '#828282',
   },
@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
   priceContainerStyle: {
     flex: 1.6,
     justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   btnContainerStyle: {
     flex: 1,
@@ -161,6 +162,7 @@ const styles = StyleSheet.create({
   },
   priceTextStyle: {
     fontSize: 30,
+    fontWeight: '400',
   },
   btnAcceptStyle: {
     width: '90%',

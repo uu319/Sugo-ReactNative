@@ -10,10 +10,14 @@ import {
 } from 'react-native';
 import t from 'tcomb-form-native';
 import * as firebase from 'firebase';
-import { Location, Permissions } from 'expo';
 import { Ionicons } from '@expo/vector-icons';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
-import { MONTHARRAY, GLOBAL_STYLES } from '../components/Constants';
+import {
+  MONTHARRAY,
+  GLOBAL_STYLES,
+  getLatLongAsync,
+  getAddressByLatLong,
+} from '../components/Constants';
 import { Spinner } from '../components/common/Spinner';
 
 const { width } = Dimensions.get('window');
@@ -117,35 +121,35 @@ export default class MyModal extends Component {
     console.log('value: ', value);
   };
 
-  getLatLongAsync = async () => {
-    const { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status === 'granted') {
-      try {
-        const location = await Location.getCurrentPositionAsync({});
-        return location;
-      } catch {
-        console.log('error on location');
-      }
-    }
-    return null;
-  };
-
-  getAddressByLatLong = async (longitude, latitude) => {
-    try {
-      const address = await Location.reverseGeocodeAsync({ longitude, latitude });
-      return address;
-    } catch {
-      console.log('error on address');
-    }
-    return null;
-  };
+  // getLatLongAsync = async () => {
+  //   const { status } = await Permissions.askAsync(Permissions.LOCATION);
+  //   if (status === 'granted') {
+  //     try {
+  //       const location = await Location.getCurrentPositionAsync({});
+  //       return location;
+  //     } catch {
+  //       Alert.alert('Error', 'Something went wrong, please try again.');
+  //     }
+  //   }
+  //   return null;
+  // };
+  //
+  // getAddressByLatLong = async (longitude, latitude) => {
+  //   try {
+  //     const address = await Location.reverseGeocodeAsync({ longitude, latitude });
+  //     return address;
+  //   } catch {
+  //     Alert.alert('Error', 'Something went wrong, please try again.');
+  //   }
+  //   return null;
+  // };
 
   storePostToLocalStorage = async postId => {
     try {
       await AsyncStorage.setItem('postId', postId);
     } catch (error) {
       this.setState({ loading: false });
-      Alert.alert('error on storeUserToFirebase');
+      Alert.alert('Error', 'Something went wrong, please try again.');
     }
   };
 
@@ -210,31 +214,35 @@ export default class MyModal extends Component {
   };
 
   onSubmitPost = () => {
-    const value = this._form.getValue(); // use that ref to get the form value
+    const value = this._form.getValue();
     if (value) {
       this.setState({ loading: true });
       const desc = value.Description;
-      // const price = value.Price;
-      this.getLatLongAsync()
+      getLatLongAsync()
         .then(loc => {
           const { longitude, latitude } = loc.coords;
-          this.getAddressByLatLong(longitude, latitude)
+          getAddressByLatLong(longitude, latitude)
             .then(add => {
               const addIndex = add[0];
-              const { city, street, country } = addIndex;
-              const address = `${street}, ${city}, ${country}`;
+              const { city, street } = addIndex;
+              const address = `${street}, ${city}`;
               this.insertPost(desc, latitude, longitude, address);
             })
-            .catch(({ message }) => {
+            .catch(() => {
               this.setState({ loading: false });
-              Alert.alert('Something went wrong.', message, [{ text: 'OK' }], {
-                cancelable: false,
-              });
+              Alert.alert(
+                'Error',
+                'Problem getting your address, please try again.',
+                [{ text: 'OK' }],
+                {
+                  cancelable: false,
+                },
+              );
             });
         })
         .catch(() => {
           this.setState({ loading: false });
-          Alert.alert('Error', 'Error getLatLong', [{ text: 'OK' }], {
+          Alert.alert('Error', 'Please turn your Location/GPS on.', [{ text: 'OK' }], {
             cancelable: false,
           });
         });
@@ -248,7 +256,6 @@ export default class MyModal extends Component {
     console.log('pricedesc', `${price}${desc}`);
     const { btnSubmitStyle } = styles;
     let disabled = true;
-    // const disabled = (price || desc) === '';
     if (!(price === '' || desc === '')) {
       disabled = false;
     }

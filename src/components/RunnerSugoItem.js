@@ -4,9 +4,8 @@ import React, { Component } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import { Location, Permissions } from 'expo';
 import MyModal from './RunnerSugoDetailsModal';
-import { getMomentAgo, sendNotification } from './Constants';
+import { getMomentAgo, sendNotification, getLatLongAsync } from './Constants';
 
 export default class SugoList extends Component {
   state = {
@@ -23,29 +22,6 @@ export default class SugoList extends Component {
   componentWillUnmount() {
     clearInterval(this.countdownInterval);
   }
-
-  getLatLongAsync = async () => {
-    const { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status === 'granted') {
-      try {
-        const location = await Location.getCurrentPositionAsync({});
-        return location;
-      } catch {
-        console.log('error on location');
-      }
-    }
-    return null;
-  };
-
-  getAddressByLatLong = async (longitude, latitude) => {
-    try {
-      const address = await Location.reverseGeocodeAsync({ longitude, latitude });
-      return address;
-    } catch {
-      console.log('error on address');
-    }
-    return null;
-  };
 
   updateSugoOnFirebase = async (post, lat, long) => {
     const { userInfo } = this.props;
@@ -75,7 +51,6 @@ export default class SugoList extends Component {
         if (snapshot.val() === 'pending') {
           try {
             await database.ref().update(updates);
-            Alert.alert('token', token);
             sendNotification(seekerToken, 'Horay!', 'Someone accepted your sugo');
             this.setState({ isModalVisible: false });
           } catch (e) {
@@ -91,14 +66,13 @@ export default class SugoList extends Component {
   };
 
   acceptSugo = post => {
-    this.getLatLongAsync()
+    getLatLongAsync()
       .then(loc => {
         const { longitude, latitude } = loc.coords;
         this.updateSugoOnFirebase(post, latitude, longitude);
       })
       .catch(() => {
-        // this.setState({ loading: false, editable: true });
-        Alert.alert('Fetching location failed', 'Pl', [{ text: 'OK' }], {
+        Alert.alert('Fetching location failed', 'Please turn on your location.', [{ text: 'OK' }], {
           cancelable: false,
         });
       });
@@ -131,37 +105,6 @@ export default class SugoList extends Component {
     }
   };
 
-  // getMomentAgo = milliseconds => {
-  //   let momentAgo = '';
-  //   const seconds = milliseconds / 1000;
-  //   const minutes = seconds / 60;
-  //   const hour = minutes / 60;
-  //   const day = hour / 24;
-  //
-  //   if (seconds < 60) {
-  //     momentAgo = `${Math.round(seconds)} sec ago`;
-  //   } else if (seconds > 60 && minutes < 60) {
-  //     momentAgo = `${Math.round(minutes)} min ago`;
-  //   } else if (minutes > 60 && hour < 24) {
-  //     momentAgo = `${Math.round(hour)} hr ago`;
-  //   } else {
-  //     momentAgo = `${Math.round(day)} days ago`;
-  //   }
-  //   this.setState({ momentAgo });
-  // };
-
-  // renderMomentAgo = () => {
-  //
-  //   const { metadata } = post;
-  //   const { timeStamp } = metadata;
-  //   const newDate = new Date().getTime();
-  //   const milliseconds = newDate - timeStamp;
-  //   this.getMomentAgo(milliseconds);
-  //   this.countdownInterval = setInterval(() => {
-  //     this.getMomentAgo(milliseconds);
-  //   }, 10000);
-  // };
-
   renderMomentAgo = () => {
     const { post } = this.props;
     const { metadata } = post;
@@ -177,14 +120,6 @@ export default class SugoList extends Component {
       }, 10000);
     }
   };
-
-  // <Text style={titleTextStyle}>{post.metadata.title}</Text>
-  // <ScrollView style={descContainerStyle}>
-  //   <Text style={descTextStyle}>{post.metadata.desc}</Text>
-  // </ScrollView>
-  // <TouchableOpacity style={btnSubmitStyle} onPress={() => console.log(post.id)}>
-  //   <Text style={{ color: 'white' }}>Accept</Text>
-  // </TouchableOpacity>
 
   render() {
     const { post } = this.props;
@@ -237,24 +172,26 @@ export default class SugoList extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    height: 120,
+    height: 110,
     width: '95%',
-    borderColor: '#dddddd',
-    borderWidth: 0.4,
+    // borderColor: '#dddddd',
+    // borderWidth: 0.4,
     borderRadius: 10,
     alignSelf: 'center',
     overflow: 'hidden',
     flexDirection: 'row',
     margin: 5,
-    elevation: 1,
+    elevation: 2,
   },
   infoContainer: {
     flex: 2,
     padding: 13,
+    justifyContent: 'center',
   },
   priceTextStyle: {
     color: '#7F838F',
     fontSize: 24,
+    fontWeight: '500',
   },
   nameTextStyle: {
     color: '#585966',

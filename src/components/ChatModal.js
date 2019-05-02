@@ -13,21 +13,18 @@ import {
   KeyboardAvoidingView,
   Alert,
   Image,
-  Platform
 } from 'react-native';
 import Modal from 'react-native-modal';
-import { Constants, ImagePicker, Notifications, Permissions } from 'expo';
-import { getStatusBarHeight } from 'react-native-status-bar-height';
+import { ImagePicker } from 'expo';
 import { Ionicons } from '@expo/vector-icons';
-import { timeTo12HrFormat } from './Constants';
-import Loading from './Loading';
+import { timeTo12HrFormat, sendNotification } from './Constants';
 
 export default class Chat extends Component {
   constructor(props) {
     super(props);
     this.database = firebase.database();
     this.state = {
-      postId: props.postId,
+      post: props.post,
       userId: '',
       textMessage: '',
       messageList: [],
@@ -37,33 +34,14 @@ export default class Chat extends Component {
   }
 
   async componentDidMount() {
-    if (Platform.OS === 'android') {
-      Notifications.createChannelAndroidAsync('chat-messages', {
-        name: 'Chat messages',
-        sound: true,
-      });
-    }
-    // const result = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-    //
-    // if (Constants.isDevice && result.status === 'granted') {
-    //   console.log('Notification permissions granted.');
-    // }
-    //
-    // // If we want to do something with the notification when the app
-    // // is active, we need to listen to notification events and
-    // // handle them in a callback
-    // Notifications.addListener(this.handleNotification);
-
-    const { postId } = this.state;
+    const { post } = this.state;
+    const { postId } = post;
     const user = await AsyncStorage.getItem('user');
     const type = await AsyncStorage.getItem('type');
     const parsedUser = JSON.parse(user);
     const { uid } = parsedUser;
     this.setState({ userId: uid, type, loading: true });
     this.database.ref(`messages/${postId}`).on('child_added', value => {
-      if (!(value.val().from === uid)) {
-        this.testNotify();
-      }
       this.setState({ loading: false });
       this.setState(prevState => {
         return {
@@ -134,6 +112,7 @@ export default class Chat extends Component {
 
     // We're done with the blob, close and release it
     blob.close();
+
     try {
       const getDownloadURL = await snapshot.ref.getDownloadURL();
       this.sendMessage('image', getDownloadURL);
@@ -142,21 +121,12 @@ export default class Chat extends Component {
     }
   };
 
-  testNotify = () => {
-    const localNotification = {
-      title: 'New Message Received',
-      color: 'red',
-      android: {
-        channelId: 'chat-messages',
-        sound: true,
-      },
-    };
-
-    Notifications.presentLocalNotificationAsync(localNotification);
-  };
-
   sendMessage = async (msgType, msg) => {
-    const { postId, userId, type } = this.state;
+    const { post, userId, type } = this.state;
+    const { postId, runner, seeker } = post;
+    const { runnerToken } = runner;
+    const { seekerToken } = seeker;
+    let token = '';
     if (msg.length > 0) {
       const msgId = await this.database
         .ref('messages')
@@ -171,11 +141,14 @@ export default class Chat extends Component {
       };
       if (type === 'runner') {
         updates[`posts/${postId}/seeker/withMessage`] = 'true';
+        token = seekerToken;
       } else {
+        token = runnerToken;
         updates[`posts/${postId}/runner/withMessage`] = 'true';
       }
       updates[`messages/${postId}/ ${msgId}`] = message;
       await this.database.ref().update(updates);
+      sendNotification(token, 'Message', msg);
       this.setState({ textMessage: '' });
     }
   };
@@ -214,8 +187,8 @@ export default class Chat extends Component {
             height: 150,
             alignSelf: item.from === userId ? 'flex-end' : 'flex-start',
             borderRadius: 5,
-            borderColor: 'gray',
-            borderWidth: 0.5,
+            // borderColor: 'gray',
+            // borderWidth: 0.5,
             marginTop: 4,
           }}
         >
@@ -239,14 +212,25 @@ export default class Chat extends Component {
   };
 
   renderFlatList = () => {
+    const { type } = this.state;
     const { loading, messageList } = this.state;
-    const { height } = Dimensions.get('window');
+    const typeText = type === 'seeker' ? 'Runner' : 'Seeker';
     return loading ? (
-      <Loading />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: 'white',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Image source={require('../myassets/message.png')} style={{ width: 100, height: 100 }} />
+        <Text style={{ fontSize: 30, color: '#dddddd' }}>Say Hi To Your {typeText}</Text>
+      </View>
     ) : (
       <FlatList
         inverted
-        style={{ padding: 10, height: height * 0.8 }}
+        style={{ height: '100%', backgroundColor: 'white' }}
         data={messageList}
         renderItem={this.renderRow}
         keyExtractor={(item, index) => index.toString()}
@@ -255,9 +239,8 @@ export default class Chat extends Component {
   };
 
   onBackPress = () => {
-    const { type, postId } = this.state;
-    console.log('back', postId);
-    console.log('type', type);
+    const { type, post } = this.state;
+    const { postId } = post;
     const updates = {};
     if (type === 'seeker') {
       updates[`posts/${postId}/seeker/withMessage`] = 'false';
@@ -283,9 +266,8 @@ export default class Chat extends Component {
         isVisible={isVisible}
         style={{ margin: 0, backgroundColor: 'white' }}
       >
-        <SafeAreaView style={container}>
+        <View style={container}>
           <View style={headerContainerStyle}>
-            <Text style={{ fontSize: 30 }}>Chats</Text>
             <Ionicons
               onPress={() => {
                 this.onBackPress();
@@ -293,32 +275,40 @@ export default class Chat extends Component {
               }}
               name="ios-arrow-back"
               size={40}
-              color="#BDBDBD"
+              color="black"
             />
+            <Text style={{ fontSize: 30, fontWeight: '600', marginLeft: 20 }}>Chats</Text>
           </View>
           {this.renderFlatList()}
-          <KeyboardAvoidingView
-            style={inputContainerStyle}
-            keyboardVerticalOffset={-200}
-            behavior="padding"
+          <View
+            style={{
+              padding: 10,
+              backgroundColor: 'white',
+            }}
           >
-            <TouchableOpacity onPress={this._pickImage} style={sendButtonStyle}>
-              <Ionicons name="md-photos" size={32} color="black" />
-            </TouchableOpacity>
-            <TextInput
-              style={inputStyle}
-              value={textMessage}
-              placeHolder="Type message"
-              onChangeText={this.handleChange('textMessage')}
-            />
-            <TouchableOpacity
-              onPress={() => this.sendMessage('text', textMessage)}
-              style={sendButtonStyle}
+            <KeyboardAvoidingView
+              style={inputContainerStyle}
+              keyboardVerticalOffset={-200}
+              behavior="padding"
             >
-              <Ionicons name="md-send" size={32} color="black" />
-            </TouchableOpacity>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
+              <TouchableOpacity onPress={this._pickImage} style={sendButtonStyle}>
+                <Ionicons name="md-photos" size={32} color="#33A1DE" />
+              </TouchableOpacity>
+              <TextInput
+                style={inputStyle}
+                value={textMessage}
+                placeHolder="Type message"
+                onChangeText={this.handleChange('textMessage')}
+              />
+              <TouchableOpacity
+                onPress={() => this.sendMessage('text', textMessage)}
+                style={sendButtonStyle}
+              >
+                <Ionicons name="md-send" size={32} color="#33A1DE" />
+              </TouchableOpacity>
+            </KeyboardAvoidingView>
+          </View>
+        </View>
       </Modal>
     );
   }
@@ -334,7 +324,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     padding: 10,
-    backgroundColor: '#dddddd',
+    backgroundColor: 'white',
+    borderRadius: 30,
   },
   inputStyle: {
     padding: 10,
@@ -355,10 +346,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   headerContainerStyle: {
-    height: 60,
+    height: 75,
     width: '100%',
-    justifyContent: 'center',
-    paddingLeft: 20,
-    marginTop: getStatusBarHeight(),
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    padding: 20,
+    backgroundColor: 'white',
   },
 });
