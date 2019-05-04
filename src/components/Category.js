@@ -45,7 +45,7 @@ export default class Category extends Component {
           }}
         >
           <Text>{name}</Text>
-          <Text>₱100.00</Text>
+          <Text>₱300.00</Text>
         </View>
       </TouchableOpacity>
     );

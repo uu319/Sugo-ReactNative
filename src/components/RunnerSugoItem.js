@@ -1,17 +1,28 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  NetInfo,
+  Platform,
+} from 'react-native';
+import { Location, Permissions, IntentLauncherAndroid } from 'expo';
 import { Ionicons } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import MyModal from './RunnerSugoDetailsModal';
-import { getMomentAgo, sendNotification, getLatLongAsync } from './Constants';
+import SelectedSugo from './RunnerSugoItemSelectedModal';
+import { getMomentAgo, sendNotification } from './Constants';
 
-export default class SugoList extends Component {
+export default class SugoItem extends Component {
   state = {
     momentAgo: '',
     uri: '',
     isModalVisible: false,
+    isProgressBarVisible: false,
   };
 
   componentDidMount() {
@@ -23,60 +34,146 @@ export default class SugoList extends Component {
     clearInterval(this.countdownInterval);
   }
 
-  updateSugoOnFirebase = async (post, lat, long) => {
+  // acceptSugo = async (post, lat, long) => {
+  //   const { userInfo } = this.props;
+  //   const { email, userId, displayName, photoURL, token } = userInfo;
+  //   const { postId, seeker } = post;
+  //   const { seekerId, seekerToken } = seeker;
+  //   const runner = {
+  //     email,
+  //     runnerId: userId,
+  //     lat,
+  //     long,
+  //     displayName,
+  //     photoURL,
+  //     withMessage: 'false',
+  //     runnerToken: token,
+  //   };
+  //   const updates = {};
+  //   updates[`/posts/${postId}/metadata/status`] = 'accepted';
+  //   updates[`/posts/${postId}/runner`] = runner;
+  //   updates[`/users/${seekerId}/currentPost`] = postId;
+  //   updates[`/users/${seekerId}/currentPostStatus`] = 'accepted';
+  //   updates[`/users/${userId}/currentPostStatus`] = 'accepted';
+  //   updates[`/users/${userId}/currentPost`] = postId;
+  //   const database = firebase.database();
+  //   try {
+  //     await database.ref(`posts/${postId}/metadata/status`).once('value', async snapshot => {
+  //       if (snapshot.val() === 'pending') {
+  //         try {
+  //           await database.ref().update(updates);
+  //           sendNotification(seekerToken, 'Horay!', 'Someone accepted your sugo');
+  //           this.setState({ isModalVisible: false });
+  //           this.setState({ isProgressBarVisible: false });
+  //         } catch (e) {
+  //           Alert.alert('Something went wrong please try again');
+  //         }
+  //       } else {
+  //         Alert.alert('Something went wrong please try again');
+  //       }
+  //     });
+  //   } catch (e) {
+  //     Alert.alert('Something went wrong please try again');
+  //   }
+  // };
+
+  acceptSugo = async post => {
     const { userInfo } = this.props;
     const { email, userId, displayName, photoURL, token } = userInfo;
     const { postId, seeker } = post;
     const { seekerId, seekerToken } = seeker;
-    const runner = {
-      email,
-      runnerId: userId,
-      lat,
-      long,
-      displayName,
-      photoURL,
-      withMessage: 'false',
-      runnerToken: token,
-    };
-    const updates = {};
-    updates[`/posts/${postId}/metadata/status`] = 'accepted';
-    updates[`/posts/${postId}/runner`] = runner;
-    updates[`/users/${seekerId}/currentPost`] = postId;
-    updates[`/users/${seekerId}/currentPostStatus`] = 'accepted';
-    updates[`/users/${userId}/currentPostStatus`] = 'accepted';
-    updates[`/users/${userId}/currentPost`] = postId;
-    const database = firebase.database();
-    try {
-      await database.ref(`posts/${postId}/metadata/status`).once('value', async snapshot => {
-        if (snapshot.val() === 'pending') {
-          try {
-            await database.ref().update(updates);
-            sendNotification(seekerToken, 'Horay!', 'Someone accepted your sugo');
-            this.setState({ isModalVisible: false });
-          } catch (e) {
-            Alert.alert('Something went wrong please try again');
+    if (Platform.OS === 'android') {
+      NetInfo.isConnected.fetch().then(async isConnected => {
+        if (isConnected) {
+          const { status } = await Permissions.askAsync(Permissions.LOCATION);
+          if (status === 'granted') {
+            this.setState({ isProgressBarVisible: true });
+            try {
+              const location = await Location.getCurrentPositionAsync({});
+              const { latitude, longitude } = location.coords;
+              const runner = {
+                email,
+                runnerId: userId,
+                lat: latitude,
+                long: longitude,
+                displayName,
+                photoURL,
+                withMessage: 'false',
+                runnerToken: token,
+              };
+              const updates = {};
+              updates[`/posts/${postId}/metadata/status`] = 'accepted';
+              updates[`/posts/${postId}/runner`] = runner;
+              updates[`/users/${seekerId}/currentPost`] = postId;
+              updates[`/users/${seekerId}/currentPostStatus`] = 'accepted';
+              updates[`/users/${userId}/currentPostStatus`] = 'accepted';
+              updates[`/users/${userId}/currentPost`] = postId;
+              const database = firebase.database();
+              await database
+                .ref(`posts/${postId}/metadata/status`)
+                .once('value', async snapshot => {
+                  if (snapshot.val() === 'pending') {
+                    try {
+                      await database.ref().update(updates);
+                      sendNotification(seekerToken, 'Horay!', 'Someone accepted your sugo');
+                      this.setState({ isModalVisible: false });
+                      this.setState({ isProgressBarVisible: false });
+                    } catch (e) {
+                      Alert.alert('Something went wrong please try again');
+                    }
+                  } else {
+                    Alert.alert('Something went wrong please try again');
+                  }
+                });
+            } catch (e) {
+              this.setState({ isProgressBarVisible: false });
+              if (e.code === 'E_LOCATION_SERVICES_DISABLED') {
+                Alert.alert(
+                  'Location',
+                  'SugoPH wants access to your location services.',
+                  [
+                    { text: 'Do not allow.', style: 'cancel' },
+                    {
+                      text: 'Go to settings.',
+                      onPress: () =>
+                        IntentLauncherAndroid.startActivityAsync(
+                          IntentLauncherAndroid.ACTION_LOCATION_SOURCE_SETTINGS,
+                        ),
+                    },
+                  ],
+                  { cancelable: false },
+                );
+              } else {
+                Alert.alert(
+                  'Error',
+                  `${
+                    e.message
+                  } Sorry for having this issue, SugoPH team will look into this as soon as possible.`,
+                );
+              }
+            }
           }
         } else {
-          Alert.alert('Something went wrong please try again');
+          Alert.alert('Connection Problem.', 'Please check your internet connection');
         }
       });
-    } catch (e) {
-      Alert.alert('Something went wrong please try again');
     }
   };
 
-  acceptSugo = post => {
-    getLatLongAsync()
-      .then(loc => {
-        const { longitude, latitude } = loc.coords;
-        this.updateSugoOnFirebase(post, latitude, longitude);
-      })
-      .catch(() => {
-        Alert.alert('Fetching location failed', 'Please turn on your location.', [{ text: 'OK' }], {
-          cancelable: false,
-        });
-      });
-  };
+  // acceptSugo = post => {
+  //   this.setState({ isProgressBarVisible: true });
+  //   getLatLongAsync()
+  //     .then(loc => {
+  //       const { longitude, latitude } = loc.coords;
+  //       this.updateSugoOnFirebase(post, latitude, longitude);
+  //     })
+  //     .catch(() => {
+  //       this.setState({ isProgressBarVisible: false });
+  //       Alert.alert('Fetching location failed', 'Please turn on your location.', [{ text: 'OK' }], {
+  //         cancelable: false,
+  //       });
+  //     });
+  // };
 
   showModal = () => {
     this.setState({ isModalVisible: true });
@@ -123,7 +220,7 @@ export default class SugoList extends Component {
 
   render() {
     const { post } = this.props;
-    const { momentAgo, uri, isModalVisible } = this.state;
+    const { momentAgo, uri, isModalVisible, isProgressBarVisible } = this.state;
     const {
       container,
       infoContainer,
@@ -139,12 +236,13 @@ export default class SugoList extends Component {
     } = styles;
     return (
       <TouchableOpacity onPress={this.showModal} style={container}>
-        <MyModal
+        <SelectedSugo
           post={post}
           isVisible={isModalVisible}
           hideModal={this.hideModal}
           onAcceptSugo={this.acceptSugo}
           sugoLogo={uri}
+          isProgressBarVisible={isProgressBarVisible}
         />
         <View style={infoContainer}>
           <Text style={priceTextStyle}>{`₱${post.metadata.price}.00`}</Text>

@@ -7,15 +7,17 @@ import {
   StyleSheet,
   Alert,
   AsyncStorage,
-  NetInfo,
-  Platform,
 } from 'react-native';
 import t from 'tcomb-form-native';
 import * as firebase from 'firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
-import { Location, Permissions, IntentLauncherAndroid } from 'expo';
-import { MONTHARRAY, GLOBAL_STYLES } from '../components/Constants';
+import {
+  MONTHARRAY,
+  GLOBAL_STYLES,
+  getLatLongAsync,
+  getAddressByLatLong,
+} from '../components/Constants';
 import { Spinner } from '../components/common/Spinner';
 
 const { width } = Dimensions.get('window');
@@ -48,6 +50,7 @@ export default class MyModal extends Component {
   initializeForm = () => {
     const { loading } = this.state;
     const editable = !loading;
+    console.log('editable', editable);
     const formStyles = {
       ...Form.stylesheet,
       formGroup: {
@@ -57,11 +60,10 @@ export default class MyModal extends Component {
       },
       controlLabel: {
         normal: {
-          color: 'gray',
-          fontSize: 17,
+          color: 'black',
+          fontSize: 21,
           marginBottom: 7,
-          fontWeight: '200',
-          fontStyle: 'italic',
+          fontWeight: '300',
         },
         // the style applied when a validation error occours
         error: {
@@ -98,7 +100,6 @@ export default class MyModal extends Component {
               normal: {
                 ...Form.stylesheet.textbox.normal,
                 height: 130,
-                color: '#484848',
                 textAlignVertical: 'top',
                 padding: 10,
                 backgroundColor: 'white',
@@ -115,9 +116,10 @@ export default class MyModal extends Component {
     this.setState({ options });
   };
 
-  // handleSubmit = () => {
-  //   const value = this._form.getValue();
-  // };
+  handleSubmit = () => {
+    const value = this._form.getValue();
+    console.log('value: ', value);
+  };
 
   storePostToLocalStorage = async postId => {
     try {
@@ -128,10 +130,7 @@ export default class MyModal extends Component {
     }
   };
 
-  insertPost = () => {
-    this.setState({ loading: true });
-    const value = this._form.getValue();
-    const desc = value.Description;
+  insertPost = (desc, lat, long, address) => {
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
     const { uid, displayName, email, photoURL, catName, token } = params;
@@ -141,95 +140,91 @@ export default class MyModal extends Component {
     const month = MONTHARRAY[monthIndex];
     const year = new Date().getFullYear();
     const dateToString = `${month} ${date}, ${year}`;
-    if (Platform.OS === 'android') {
-      NetInfo.isConnected.fetch().then(async isConnected => {
-        if (isConnected) {
-          const { status } = await Permissions.askAsync(Permissions.LOCATION);
-          if (status === 'granted') {
-            try {
-              const location = await Location.getCurrentPositionAsync({});
-              const { latitude, longitude } = location.coords;
-              const add = await Location.reverseGeocodeAsync({ longitude, latitude });
+    const metadata = {
+      address,
+      timeStamp,
+      date: dateToString,
+      status: 'pending',
+      title: catName,
+      desc,
+      price: 300,
+      timeStarted: '',
+      timeDone: '',
+      timeSpent: '',
+    };
+    const seeker = {
+      seekerId: uid,
+      displayName,
+      email,
+      photoURL,
+      lat,
+      long,
+      seekerToken: token,
+      withMessage: 'false',
+    };
+    const insertData = {
+      postId: `${timeStamp}${uid}`,
+      metadata,
+      seeker,
+      runner: 'none',
+    };
+    const postId = `${timeStamp}${uid}`;
+    const updates = {};
+    updates[`/posts/${postId}`] = insertData;
+    updates[`/users/${uid}/currentPost`] = postId;
+    updates[`/users/${uid}/currentPostStatus`] = 'pending';
+    return firebase
+      .database()
+      .ref()
+      .update(updates)
+      .then(() => {
+        const { navigate } = navigation;
+        this.setState({ loading: false });
+        this.storePostToLocalStorage(postId);
+        navigate('SeekerTabNavigator');
+      })
+      .catch(() =>
+        Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
+          cancelable: false,
+        }),
+      );
+  };
+
+  onSubmitPost = () => {
+    const value = this._form.getValue();
+    if (value) {
+      this.setState({ loading: true });
+      const desc = value.Description;
+      getLatLongAsync()
+        .then(loc => {
+          const { longitude, latitude } = loc.coords;
+          getAddressByLatLong(longitude, latitude)
+            .then(add => {
               const addIndex = add[0];
               const { city, street } = addIndex;
               const address = `${street}, ${city}`;
-              const postId = `${timeStamp}${uid}`;
-              const updates = {};
-              const metadata = {
-                address,
-                timeStamp,
-                date: dateToString,
-                status: 'pending',
-                title: catName,
-                desc,
-                price: 300,
-                timeStarted: '',
-                timeDone: '',
-                timeSpent: '',
-              };
-              const seeker = {
-                seekerId: uid,
-                displayName,
-                email,
-                photoURL,
-                lat: latitude,
-                long: longitude,
-                seekerToken: token,
-                withMessage: 'false',
-              };
-              const insertData = {
-                postId: `${timeStamp}${uid}`,
-                metadata,
-                seeker,
-                runner: 'none',
-              };
-              updates[`/posts/${postId}`] = insertData;
-              updates[`/users/${uid}/currentPost`] = postId;
-              updates[`/users/${uid}/currentPostStatus`] = 'pending';
-              await firebase
-                .database()
-                .ref()
-                .update(updates);
-              const { navigate } = navigation;
+              this.setTimeout(() => {
+                this.insertPost(desc, latitude, longitude, address);
+              }, 500);
+            })
+            .catch(() => {
               this.setState({ loading: false });
-              this.storePostToLocalStorage(postId);
-              navigate('SeekerTabNavigator');
-            } catch (e) {
-              this.setState({ loading: false });
-              if (e.code === 'E_LOCATION_SERVICES_DISABLED') {
-                Alert.alert(
-                  'Location',
-                  'SugoPH wants access to your location services.',
-                  [
-                    { text: 'Do not allow.', style: 'cancel' },
-                    {
-                      text: 'Go to settings.',
-                      onPress: () =>
-                        IntentLauncherAndroid.startActivityAsync(
-                          IntentLauncherAndroid.ACTION_LOCATION_SOURCE_SETTINGS,
-                        ),
-                    },
-                  ],
-                  { cancelable: false },
-                );
-              } else {
-                Alert.alert(
-                  'Error',
-                  `${
-                    e.message
-                  } Sorry for having this issue, SugoPH team will look into this as soon as possible.`,
-                );
-              }
-            }
-          } else {
-            this.setState({ loading: false });
-            Alert.alert('Location', 'To continue, please allow SugoPH to access your location.');
-          }
-        } else {
+              Alert.alert(
+                'Error',
+                'Problem getting your address, please try again.',
+                [{ text: 'OK' }],
+                {
+                  cancelable: false,
+                },
+              );
+            });
+        })
+        .catch(() => {
           this.setState({ loading: false });
-          Alert.alert('Connection Problem.', 'Please check your internet connection');
-        }
-      });
+          Alert.alert('Error', 'Please turn your Location/GPS on.', [{ text: 'OK' }], {
+            cancelable: false,
+          });
+        });
     }
   };
 
@@ -237,6 +232,7 @@ export default class MyModal extends Component {
     const { loading, value } = this.state;
     const price = value.Price;
     const desc = value.Description;
+    console.log('pricedesc', `${price}${desc}`);
     const { btnSubmitStyle } = styles;
     let disabled = true;
     if (!(price === '' || desc === '')) {
@@ -244,14 +240,13 @@ export default class MyModal extends Component {
     }
 
     const backgroundColor = disabled ? '#FFCA85' : GLOBAL_STYLES.BRAND_COLOR;
+    console.log('disabled', disabled);
     return loading ? (
-      <View style={{ height: 40, alignItems: 'center', justifyContent: 'center' }}>
-        <Spinner />
-      </View>
+      <Spinner />
     ) : (
       <TouchableOpacity
         disabled={disabled}
-        onPress={this.insertPost}
+        onPress={this.onSubmitPost}
         style={[btnSubmitStyle, { backgroundColor }]}
       >
         <Text style={{ color: 'white', fontSize: 20 }}>Submit</Text>
@@ -272,7 +267,7 @@ export default class MyModal extends Component {
             onPress={() => navigation.goBack()}
             name="ios-arrow-back"
             size={40}
-            color="black"
+            color="#BDBDBD"
           />
         </View>
         <View style={container}>
@@ -304,6 +299,8 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 1, width: 1 },
     shadowColor: 'gray',
     elevation: 1,
+    borderColor: 'black',
+    borderWidth: 1,
   },
   headerContainerStyle: {
     height: 60,
@@ -311,6 +308,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingLeft: 20,
     marginTop: getStatusBarHeight(),
+    borderColor: 'black',
+    borderWidth: 1,
   },
   img: {
     flex: 1,
@@ -358,5 +357,7 @@ const styles = StyleSheet.create({
   sendControlContainerOuter: {
     flex: 1,
     justifyContent: 'flex-end',
+    borderColor: 'black',
+    borderWidth: 1,
   },
 });

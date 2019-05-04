@@ -7,12 +7,13 @@ import {
   SafeAreaView,
   Image,
   TouchableOpacity,
+  ProgressBarAndroid,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
 import { GLOBAL_STYLES, renderSugoLogo } from './Constants';
 
-export default class MyModal extends Component {
+export default class SelectedSugo extends Component {
   render() {
     const {
       container,
@@ -31,8 +32,9 @@ export default class MyModal extends Component {
       btnContainerStyle,
       priceTextStyle,
       btnAcceptStyle,
+      progressbarContainer,
     } = styles;
-    const { post, hideModal, isVisible, onAcceptSugo } = this.props;
+    const { post, hideModal, isVisible, onAcceptSugo, isProgressBarVisible } = this.props;
     const { metadata, seeker } = post;
     const { displayName, photoURL } = seeker;
     const { title, desc, price } = metadata;
@@ -66,6 +68,18 @@ export default class MyModal extends Component {
               <Text style={detailsTextStyle}>{desc}</Text>
             </View>
           </ScrollView>
+          {isProgressBarVisible ? (
+            <View style={progressbarContainer}>
+              <Text style={{ color: GLOBAL_STYLES.BRAND_COLOR }}>Accepting Sugo, please wait.</Text>
+              <ProgressBarAndroid
+                color={GLOBAL_STYLES.BRAND_COLOR}
+                animating
+                styleAttr="Horizontal"
+                style={{ height: 50, width: '100%' }}
+              />
+            </View>
+          ) : null}
+
           <View style={footerContainerStyle}>
             <View style={priceContainerStyle}>
               <Text style={priceTextStyle}>₱ {price}.00</Text>
@@ -171,5 +185,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 5,
     backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
+  },
+  progressbarContainer: {
+    height: 50,
+    width: '100%',
+    padding: 0,
+    alignItems: 'center',
   },
 });

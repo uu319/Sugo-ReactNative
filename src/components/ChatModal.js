@@ -5,19 +5,18 @@ import {
   TouchableOpacity,
   Text,
   TextInput,
-  SafeAreaView,
   StyleSheet,
   AsyncStorage,
   FlatList,
-  Dimensions,
   KeyboardAvoidingView,
   Alert,
   Image,
+  ProgressBarAndroid,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import { ImagePicker } from 'expo';
 import { Ionicons } from '@expo/vector-icons';
-import { timeTo12HrFormat, sendNotification } from './Constants';
+import { timeTo12HrFormat, sendNotification, GLOBAL_STYLES } from './Constants';
 
 export default class Chat extends Component {
   constructor(props) {
@@ -30,6 +29,7 @@ export default class Chat extends Component {
       messageList: [],
       type: '',
       loading: false,
+      isProgressBarVisible: false,
     };
   }
 
@@ -68,8 +68,7 @@ export default class Chat extends Component {
 
   _pickImage = async () => {
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
+      allowsEditing: false,
     });
 
     this._handleImagePicked(pickerResult);
@@ -78,6 +77,7 @@ export default class Chat extends Component {
   _handleImagePicked = async pickerResult => {
     try {
       if (!pickerResult.cancelled) {
+        this.setState({ isProgressBarVisible: true });
         await this.uploadImageAsync(pickerResult.uri);
       }
     } catch (e) {
@@ -92,10 +92,10 @@ export default class Chat extends Component {
     // https://github.com/expo/expo/issues/2402#issuecomment-443726662
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.onload = function() {
+      xhr.onload = () => {
         resolve(xhr.response);
       };
-      xhr.onerror = function(e) {
+      xhr.onerror = e => {
         console.log(e);
         reject(new TypeError('Network request failed'));
       };
@@ -115,6 +115,7 @@ export default class Chat extends Component {
 
     try {
       const getDownloadURL = await snapshot.ref.getDownloadURL();
+      this.setState({ isProgressBarVisible: false });
       this.sendMessage('image', getDownloadURL);
     } catch (e) {
       Alert.alert('Something went wrong, please try again');
@@ -251,13 +252,14 @@ export default class Chat extends Component {
   };
 
   render() {
-    const { textMessage } = this.state;
+    const { textMessage, isProgressBarVisible } = this.state;
     const {
       container,
       inputStyle,
       sendButtonStyle,
       inputContainerStyle,
       headerContainerStyle,
+      progressbarContainer,
     } = styles;
     const { hideModal, isVisible } = this.props;
     return (
@@ -286,13 +288,26 @@ export default class Chat extends Component {
               backgroundColor: 'white',
             }}
           >
+            {isProgressBarVisible ? (
+              <View style={progressbarContainer}>
+                <Text style={{ color: GLOBAL_STYLES.BRAND_COLOR }}>
+                  Sending image, please wait.
+                </Text>
+                <ProgressBarAndroid
+                  color={GLOBAL_STYLES.BRAND_COLOR}
+                  animating
+                  styleAttr="Horizontal"
+                  style={{ height: 50, width: '100%' }}
+                />
+              </View>
+            ) : null}
             <KeyboardAvoidingView
               style={inputContainerStyle}
               keyboardVerticalOffset={-200}
               behavior="padding"
             >
               <TouchableOpacity onPress={this._pickImage} style={sendButtonStyle}>
-                <Ionicons name="md-photos" size={32} color="#33A1DE" />
+                <Ionicons name="md-photos" size={32} color={GLOBAL_STYLES.BRAND_COLOR} />
               </TouchableOpacity>
               <TextInput
                 style={inputStyle}
@@ -304,7 +319,7 @@ export default class Chat extends Component {
                 onPress={() => this.sendMessage('text', textMessage)}
                 style={sendButtonStyle}
               >
-                <Ionicons name="md-send" size={32} color="#33A1DE" />
+                <Ionicons name="md-send" size={32} color={GLOBAL_STYLES.BRAND_COLOR} />
               </TouchableOpacity>
             </KeyboardAvoidingView>
           </View>
@@ -352,5 +367,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     padding: 20,
     backgroundColor: 'white',
+  },
+  progressbarContainer: {
+    height: 50,
+    width: '100%',
+    padding: 0,
+    alignItems: 'center',
   },
 });

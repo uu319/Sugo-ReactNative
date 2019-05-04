@@ -14,9 +14,9 @@ import {
 import * as firebase from 'firebase';
 import _ from 'lodash';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
-import SugoList from '../components/RunnerSugoItem';
+import SugoItem from '../components/RunnerSugoItem';
 import Loading from '../components/Loading';
-import CurrentSugo from '../components/RunnerCurrentSugo';
+import CurrentSugo from '../components/RunnerAcceptedPost';
 
 export default class RunnerSugoScreen extends Component {
   constructor(props) {
@@ -78,7 +78,7 @@ export default class RunnerSugoScreen extends Component {
 
   renderSugoList = post => {
     const { userInfo } = this.state;
-    return <SugoList post={post.item} userInfo={userInfo} />;
+    return <SugoItem post={post.item} userInfo={userInfo} />;
   };
 
   renderFlatList = () => {

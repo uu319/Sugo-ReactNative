@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackHandler, Alert } from 'react-native';
+import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackHandler } from 'react-native';
 import { Notifications } from 'expo';
 import * as firebase from 'firebase';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
@@ -7,6 +7,7 @@ import PendingPost from '../components/SeekerPendingPost';
 import AcceptedPost from '../components/SeekerAcceptedPost';
 import Categories from '../components/Categories';
 import Loading from '../components/Loading';
+import NotifModal from '../components/NotificationSlideDown';
 
 export default class Sugo extends Component {
   constructor(props) {
@@ -18,6 +19,7 @@ export default class Sugo extends Component {
       currentPostObject: {},
       currentPostId: '',
       uid: '',
+      isNotificationModalVisible: false,
     };
   }
 
@@ -38,9 +40,13 @@ export default class Sugo extends Component {
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackPress);
   }
 
-  // _handleNotification = notification => {
-  //
+  // handleNotification = notifications => {
+  //   this.setState({ isNotificationModalVisible: true });
   // };
+
+  hideModal = () => {
+    this.setState({ isNotificationModalVisible: false });
+  };
 
   onBackButtonPressAndroid = () => {
     return true;
@@ -111,8 +117,14 @@ export default class Sugo extends Component {
   };
 
   render() {
+    const { isNotificationModalVisible } = this.state;
     const { container } = styles;
-    return <SafeAreaView style={container}>{this.renderBody()}</SafeAreaView>;
+    return (
+      <SafeAreaView style={container}>
+        <NotifModal isVisible={isNotificationModalVisible} hideModal={this.hideModal} />
+        {this.renderBody()}
+      </SafeAreaView>
+    );
   }
 }
 

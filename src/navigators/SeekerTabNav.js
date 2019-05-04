@@ -1,8 +1,7 @@
 import React from 'react';
 import { createAppContainer, createBottomTabNavigator } from 'react-navigation';
-import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import Sugo from '../ScreenSeeker/SugoScreen';
-import About from '../ScreenMutual/AboutScreen';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import Sugo from '../ScreenSeeker/SeekerSugoScreen';
 import Profile from '../ScreenMutual/ProfileScreen';
 
 const SeekerTabNavigator = createAppContainer(

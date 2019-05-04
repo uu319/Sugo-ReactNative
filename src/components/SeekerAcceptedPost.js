@@ -1,18 +1,23 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, Image, Alert, TouchableOpacity } from 'react-native';
-import { MapView } from 'expo';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Alert,
+  TouchableOpacity,
+  NetInfo,
+  Platform,
+  ProgressBarAndroid,
+} from 'react-native';
+import { MapView, Permissions, Location, IntentLauncherAndroid } from 'expo';
 import { AntDesign, Ionicons, FontAwesome } from '@expo/vector-icons';
 import * as firebase from 'firebase';
-import {
-  GLOBAL_STYLES,
-  LOGO_URL,
-  getMomentAgo,
-  sendNotification,
-  getLatLongAsync,
-} from './Constants';
-import MyModal from './ViewSugoSlideUp';
+import MapViewDirections from 'react-native-maps-directions';
+import { GLOBAL_STYLES, LOGO_URL, getMomentAgo, sendNotification } from './Constants';
+import MyModal from './ViewSugoSlideUpModal';
 import Loading from './Loading';
 import Chat from './ChatModal';
 
@@ -24,6 +29,8 @@ export default class AcceptedPost extends Component {
       isSugoModalVisible: false,
       momentAgo: '',
       isMsgModalVisible: false,
+      isProgressBarVisible: false,
+      progressBarText: '',
     };
   }
 
@@ -126,12 +133,30 @@ export default class AcceptedPost extends Component {
         {
           text: 'OK',
           onPress: async () => {
-            try {
-              await database.ref().update(updates);
-              sendNotification(runnerToken, 'Sorry', 'Your seeker cancelled the transaction');
-            } catch (e) {
-              Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
-                cancelable: false,
+            if (Platform.OS === 'android') {
+              NetInfo.isConnected.fetch().then(async isConnected => {
+                if (isConnected) {
+                  this.setState({
+                    isProgressBarVisible: true,
+                    progressBarText: 'Cancelling, please wait.',
+                  });
+                  try {
+                    await database.ref().update(updates);
+                    this.setState({
+                      isProgressBarVisible: false,
+                      progressBarText: '',
+                    });
+                    sendNotification(runnerToken, 'Sorry', 'Your seeker cancelled the transaction');
+                  } catch ({ message }) {
+                    this.setState({
+                      isProgressBarVisible: false,
+                      progressBarText: '',
+                    });
+                    Alert.alert('Error', message);
+                  }
+                } else {
+                  Alert.alert('Connection Problem.', 'Please check your internet connection');
+                }
               });
             }
           },
@@ -142,6 +167,29 @@ export default class AcceptedPost extends Component {
         cancelable: false,
       },
     );
+    // Alert.alert(
+    //   'Warning',
+    //   'Are you sure you want to cancel sugo?',
+    //   [
+    //     {
+    //       text: 'OK',
+    //       onPress: async () => {
+    //         try {
+    //           await database.ref().update(updates);
+    //           sendNotification(runnerToken, 'Sorry', 'Your seeker cancelled the transaction');
+    //         } catch (e) {
+    //           Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
+    //             cancelable: false,
+    //           });
+    //         }
+    //       },
+    //     },
+    //     { text: 'Cancel' },
+    //   ],
+    //   {
+    //     cancelable: false,
+    //   },
+    // );
   };
 
   onConfirmSugo = async () => {
@@ -158,26 +206,40 @@ export default class AcceptedPost extends Component {
     updates[`/users/${runnerId}/currentPost`] = '';
     Alert.alert(
       'Thank you.',
-      'Good to have served yoo.',
+      'Good to have served you.',
       [
         {
           text: 'OK',
           onPress: async () => {
-            try {
-              const database = firebase.database();
-              try {
-                await database.ref().update(updates);
-              } catch (e) {
-                Alert.alert('Error', 'Please check your internet connection');
-              }
-              sendNotification(
-                runnerToken,
-                'Hooray!',
-                'Your seeker confirmed the transaction as done.',
-              );
-            } catch (e) {
-              Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
-                cancelable: false,
+            if (Platform.OS === 'android') {
+              NetInfo.isConnected.fetch().then(async isConnected => {
+                if (isConnected) {
+                  this.setState({
+                    isProgressBarVisible: true,
+                    progressBarText: 'Confirming, please wait.',
+                  });
+                  try {
+                    const database = firebase.database();
+                    await database.ref().update(updates);
+                    this.setState({
+                      isProgressBarVisible: false,
+                      progressBarText: '',
+                    });
+                    sendNotification(
+                      runnerToken,
+                      'Hooray!',
+                      'Your seeker confirmed the transaction as done.',
+                    );
+                  } catch ({ message }) {
+                    this.setState({
+                      isProgressBarVisible: false,
+                      progressBarText: '',
+                    });
+                    Alert.alert('Error', message);
+                  }
+                } else {
+                  Alert.alert('Connection Problem.', 'Please check your internet connection');
+                }
               });
             }
           },
@@ -188,6 +250,38 @@ export default class AcceptedPost extends Component {
         cancelable: false,
       },
     );
+    // Alert.alert(
+    //   'Thank you.',
+    //   'Good to have served yoo.',
+    //   [
+    //     {
+    //       text: 'OK',
+    //       onPress: async () => {
+    //         try {
+    //           const database = firebase.database();
+    //           try {
+    //             await database.ref().update(updates);
+    //           } catch (e) {
+    //             Alert.alert('Error', 'Please check your internet connection');
+    //           }
+    //           sendNotification(
+    //             runnerToken,
+    //             'Hooray!',
+    //             'Your seeker confirmed the transaction as done.',
+    //           );
+    //         } catch (e) {
+    //           Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
+    //             cancelable: false,
+    //           });
+    //         }
+    //       },
+    //     },
+    //     { text: 'Cancel' },
+    //   ],
+    //   {
+    //     cancelable: false,
+    //   },
+    // );
   };
 
   updateLocation = () => {
@@ -204,29 +298,60 @@ export default class AcceptedPost extends Component {
         {
           text: 'OK',
           onPress: async () => {
-            getLatLongAsync()
-              .then(async loc => {
-                const { longitude, latitude } = loc.coords;
-                updates[`/posts/${postId}/runner/lat`] = latitude;
-                updates[`/posts/${postId}/runner/long`] = longitude;
-                try {
-                  await database.ref().update(updates);
-                  sendNotification(runnerToken, 'Notice', 'Your runner updated location!');
-                  Alert.alert('Success', 'You have succesfully updated your location!');
-                } catch (e) {
-                  Alert.alert('Error', 'Please check your internet connection');
+            if (Platform.OS === 'android') {
+              NetInfo.isConnected.fetch().then(async isConnected => {
+                if (isConnected) {
+                  try {
+                    const { status } = await Permissions.askAsync(Permissions.LOCATION);
+                    this.setState({
+                      isProgressBarVisible: true,
+                      progressBarText: 'Updating Location, please wait.',
+                    });
+                    if (status === 'granted') {
+                      const location = await Location.getCurrentPositionAsync({});
+                      const { latitude, longitude } = location.coords;
+                      updates[`/posts/${postId}/seeker/lat`] = latitude;
+                      updates[`/posts/${postId}/seeker/long`] = longitude;
+                      await database.ref().update(updates);
+                      sendNotification(runnerToken, 'Notice', 'Your runner updated location!');
+                      this.setState({ isProgressBarVisible: false, progressBarText: '' });
+                      Alert.alert('Success', 'You have succesfully updated your location!');
+                    }
+                  } catch (e) {
+                    this.setState({
+                      isProgressBarVisible: false,
+                      progressBarText: '',
+                    });
+                    if (e.code === 'E_LOCATION_SERVICES_DISABLED') {
+                      Alert.alert(
+                        'Location',
+                        'SugoPH wants access to your location services.',
+                        [
+                          { text: 'Do not allow.', style: 'cancel' },
+                          {
+                            text: 'Go to settings.',
+                            onPress: () =>
+                              IntentLauncherAndroid.startActivityAsync(
+                                IntentLauncherAndroid.ACTION_LOCATION_SOURCE_SETTINGS,
+                              ),
+                          },
+                        ],
+                        { cancelable: false },
+                      );
+                    } else {
+                      Alert.alert(
+                        'Error',
+                        `${
+                          e.message
+                        } Sorry for having this issue, SugoPH team will look into this as soon as possible.`,
+                      );
+                    }
+                  }
+                } else {
+                  Alert.alert('Connection Problem.', 'Please check your internet connection');
                 }
-              })
-              .catch(() => {
-                Alert.alert(
-                  'Fetching location failed',
-                  'Please turn on your location.',
-                  [{ text: 'OK' }],
-                  {
-                    cancelable: false,
-                  },
-                );
               });
+            }
           },
         },
         { text: 'Cancel' },
@@ -235,33 +360,71 @@ export default class AcceptedPost extends Component {
         cancelable: false,
       },
     );
+    // Alert.alert(
+    //   `Hi ${displayName}`,
+    //   'Update your location so your seeker can locate you?',
+    //   [
+    //     {
+    //       text: 'OK',
+    //       onPress: async () => {
+    //         getLatLongAsync()
+    //           .then(async loc => {
+    //             const { longitude, latitude } = loc.coords;
+    //             updates[`/posts/${postId}/runner/lat`] = latitude;
+    //             updates[`/posts/${postId}/runner/long`] = longitude;
+    //             try {
+    //               await database.ref().update(updates);
+    //               sendNotification(runnerToken, 'Notice', 'Your runner updated location!');
+    //               Alert.alert('Success', 'You have succesfully updated your location!');
+    //             } catch (e) {
+    //               Alert.alert('Error', 'Please check your internet connection');
+    //             }
+    //           })
+    //           .catch(() => {
+    //             Alert.alert(
+    //               'Fetching location failed',
+    //               'Please turn on your location.',
+    //               [{ text: 'OK' }],
+    //               {
+    //                 cancelable: false,
+    //               },
+    //             );
+    //           });
+    //       },
+    //     },
+    //     { text: 'Cancel' },
+    //   ],
+    //   {
+    //     cancelable: false,
+    //   },
+    // );
   };
 
-  updateLocation = () => {
-    const database = firebase.database();
-    const { post } = this.state;
-    const { postId, runner } = post;
-    const { runnerToken } = runner;
-    const updates = {};
-    getLatLongAsync()
-      .then(async loc => {
-        const { longitude, latitude } = loc.coords;
-        updates[`/posts/${postId}/seeker/lat`] = latitude;
-        updates[`/posts/${postId}/seeker/long`] = longitude;
-        try {
-          await database.ref().update(updates);
-          sendNotification(runnerToken, 'Notice', 'Your seeker updated location!');
-          Alert.alert('Success', 'You have succesfully updated your location!');
-        } catch (e) {
-          Alert.alert('Error', 'Please check your internet connection');
-        }
-      })
-      .catch(() => {
-        Alert.alert('Fetching location failed', 'Please turn on your location.', [{ text: 'OK' }], {
-          cancelable: false,
-        });
-      });
-  };
+  // updateLocation = () => {
+  //   const database = firebase.database();
+  //   const { post } = this.state;
+  //   const { postId, runner } = post;
+  //   const { runnerToken } = runner;
+  //   const updates = {};
+  //   getLatLongAsync()
+  //     .then(async loc => {
+  //       const { longitude, latitude } = loc.coords;
+  //       updates[`/posts/${postId}/seeker/lat`] = latitude;
+  //       updates[`/posts/${postId}/seeker/long`] = longitude;
+  //       try {
+  //         await database.ref().update(updates);
+  //         sendNotification(runnerToken, 'Notice', 'Your seeker updated location!');
+  //         Alert.alert('Success', 'You have succesfully updated your location!');
+  //       } catch (e) {
+  //         Alert.alert('Error', 'Please check your internet connection');
+  //       }
+  //     })
+  //     .catch(() => {
+  //       Alert.alert('Fetching location failed', 'Please turn on your location.', [{ text: 'OK' }], {
+  //         cancelable: false,
+  //       });
+  //     });
+  // };
 
   renderLogo = () => {
     const { post } = this.props;
@@ -292,6 +455,22 @@ export default class AcceptedPost extends Component {
         <Text style={{ color: 'white' }}>View Sugo Details</Text>
       </TouchableOpacity>
     );
+  };
+
+  renderProgress = () => {
+    const { isProgressBarVisible, progressBarText } = this.state;
+    const { progressbarContainer } = styles;
+    return isProgressBarVisible ? (
+      <View style={progressbarContainer}>
+        <Text style={{ color: GLOBAL_STYLES.BRAND_COLOR }}>{progressBarText}</Text>
+        <ProgressBarAndroid
+          color={GLOBAL_STYLES.BRAND_COLOR}
+          animating
+          styleAttr="Horizontal"
+          style={{ height: 50, width: '100%' }}
+        />
+      </View>
+    ) : null;
   };
 
   renderView() {
@@ -351,27 +530,38 @@ export default class AcceptedPost extends Component {
                 style={styles.circle}
               />
             </MapView.Marker>
+            <MapViewDirections
+              origin={{ latitude: post.runner.lat, longitude: post.runner.long }}
+              destination={{ latitude: post.seeker.lat, longitude: post.seeker.long }}
+              apikey="AIzaSyBETIF-qVoLuMa22CGL2TFD1Y_IaySfGqg"
+              strokeWidth={3}
+              strokeColor={GLOBAL_STYLES.BRAND_COLOR}
+              onError={this.onError}
+            />
           </MapView>
-          <View style={twinButtonRowContainer}>
-            <View style={twinButtonContainer}>
-              <TouchableOpacity
-                onPress={this.onCancelSugo}
-                style={[twinButtonStyle, { backgroundColor: '#EB5757' }]}
-              >
-                <Text style={{ color: 'white', fontSize: 17 }}>Cancel</Text>
+          <View>
+            <View style={twinButtonRowContainer}>
+              <View style={twinButtonContainer}>
+                <TouchableOpacity
+                  onPress={this.onCancelSugo}
+                  style={[twinButtonStyle, { backgroundColor: '#EB5757' }]}
+                >
+                  <Text style={{ color: 'white', fontSize: 17 }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={twinButtonContainer}>
+                <TouchableOpacity
+                  onPress={this.showSugoModal}
+                  style={[twinButtonStyle, { backgroundColor: '#29AB87' }]}
+                >
+                  <Text style={{ color: 'white', fontSize: 17 }}>View Details</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity onPress={this.updateLocation} style={updateLocationButtonStyle}>
+                <FontAwesome name="location-arrow" size={26} color="white" />
               </TouchableOpacity>
             </View>
-            <View style={twinButtonContainer}>
-              <TouchableOpacity
-                onPress={this.showSugoModal}
-                style={[twinButtonStyle, { backgroundColor: '#29AB87' }]}
-              >
-                <Text style={{ color: 'white', fontSize: 17 }}>View Details</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={this.updateLocation} style={updateLocationButtonStyle}>
-              <FontAwesome name="location-arrow" size={26} color="white" />
-            </TouchableOpacity>
+            {this.renderProgress()}
           </View>
         </View>
         <View style={detailContainer}>
@@ -580,5 +770,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFCA85',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  progressbarContainer: {
+    height: 50,
+    width: '100%',
+    padding: 0,
+    alignItems: 'center',
+    backgroundColor: 'white',
   },
 });

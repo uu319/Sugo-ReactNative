@@ -1,24 +1,43 @@
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
-import { MapView } from 'expo';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Alert,
+  Dimensions,
+  Platform,
+  NetInfo,
+  ProgressBarAndroid,
+} from 'react-native';
+import { MapView, Permissions, Location, IntentLauncherAndroid } from 'expo';
 import { AntDesign, Ionicons, FontAwesome } from '@expo/vector-icons';
 import * as firebase from 'firebase';
+import MapViewDirections from 'react-native-maps-directions';
 import {
   GLOBAL_STYLES,
   LOGO_URL,
   getMomentAgo,
   renderSugoLogo,
   sendNotification,
-  getLatLongAsync,
 } from './Constants';
-import MyModal from './ViewSugoSlideUp';
+import MyModal from './ViewSugoSlideUpModal';
 import Loading from './Loading';
 import Chat from './ChatModal';
 
+const { width, height } = Dimensions.get('window');
 export default class CurrentSugo extends Component {
   constructor(props) {
     super(props);
-    this.state = { post: '', isModalVisible: false, momentAgo: '', isMsgModalVisible: false };
+    this.state = {
+      post: '',
+      isModalVisible: false,
+      momentAgo: '',
+      isMsgModalVisible: false,
+      isProgressBarVisible: false,
+      progressBarText: '',
+    };
   }
 
   componentWillReceiveProps(newProps) {
@@ -59,11 +78,8 @@ export default class CurrentSugo extends Component {
     this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
     if (post !== '') {
       this.countdownInterval = setInterval(async () => {
-        const timeNow = await new Date().getTime();
-        if (timeNow) {
-          initialMilliseconds += 65000;
-          this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
-        }
+        initialMilliseconds += 65000;
+        this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
       }, 60000);
     }
   };
@@ -75,6 +91,7 @@ export default class CurrentSugo extends Component {
     const { runnerId } = runner;
     const notifTitle = 'Hoooray!';
     let notifBody = '';
+    let progressBarText = '';
     const database = firebase.database();
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = update;
@@ -84,16 +101,38 @@ export default class CurrentSugo extends Component {
     if (update === 'started') {
       updates[`/posts/${postId}/metadata/timeStarted`] = timeStamp;
       notifBody = 'Your runner started your sugo';
+      progressBarText = 'Starting Sugo, please wait.';
     }
     if (update === 'done') {
       updates[`/posts/${postId}/metadata/timeDone`] = timeStamp;
       notifBody = 'Your runner completed your sugo';
+      progressBarText = 'Completing, please wait.';
     }
-    try {
-      await database.ref().update(updates);
-      sendNotification(seekerToken, notifTitle, notifBody);
-    } catch (e) {
-      Alert.alert('Error', 'Please check your internet connection');
+    if (Platform.OS === 'android') {
+      NetInfo.isConnected.fetch().then(async isConnected => {
+        if (isConnected) {
+          this.setState({
+            isProgressBarVisible: true,
+            progressBarText,
+          });
+          try {
+            await database.ref().update(updates);
+            sendNotification(seekerToken, notifTitle, notifBody);
+            this.setState({
+              isProgressBarVisible: false,
+              progressBarText: '',
+            });
+          } catch ({ message }) {
+            this.setState({
+              isProgressBarVisible: false,
+              progressBarText: '',
+            });
+            Alert.alert('Error', message);
+          }
+        } else {
+          Alert.alert('Connection Problem.', 'Please check your internet connection');
+        }
+      });
     }
   };
 
@@ -111,29 +150,91 @@ export default class CurrentSugo extends Component {
         {
           text: 'OK',
           onPress: async () => {
-            getLatLongAsync()
-              .then(async loc => {
-                const { longitude, latitude } = loc.coords;
-                updates[`/posts/${postId}/runner/lat`] = latitude;
-                updates[`/posts/${postId}/runner/long`] = longitude;
-                try {
-                  await database.ref().update(updates);
-                  sendNotification(seekerToken, 'Notice', 'Your runner updated location!');
-                  Alert.alert('Success', 'You have succesfully updated your location!');
-                } catch (e) {
-                  Alert.alert('Error', 'Please check your internet connection');
+            if (Platform.OS === 'android') {
+              NetInfo.isConnected.fetch().then(async isConnected => {
+                if (isConnected) {
+                  const { status } = await Permissions.askAsync(Permissions.LOCATION);
+                  if (status === 'granted') {
+                    this.setState({
+                      isProgressBarVisible: true,
+                      progressBarText: 'Updating Location, please wait.',
+                    });
+                    try {
+                      const location = await Location.getCurrentPositionAsync({});
+                      const { latitude, longitude } = location.coords;
+                      updates[`/posts/${postId}/runner/lat`] = latitude;
+                      updates[`/posts/${postId}/runner/long`] = longitude;
+                      await database.ref().update(updates);
+                      sendNotification(seekerToken, 'Notice', 'Your runner updated location!');
+                      this.setState({
+                        isProgressBarVisible: false,
+                        progressBarText: '',
+                      });
+                      Alert.alert('Success', 'You have succesfully updated your location!');
+                    } catch (e) {
+                      this.setState({
+                        isProgressBarVisible: false,
+                        progressBarText: '',
+                      });
+                      if (e.code === 'E_LOCATION_SERVICES_DISABLED') {
+                        Alert.alert(
+                          'Location',
+                          'SugoPH wants access to your location services.',
+                          [
+                            { text: 'Do not allow.', style: 'cancel' },
+                            {
+                              text: 'Go to settings.',
+                              onPress: () =>
+                                IntentLauncherAndroid.startActivityAsync(
+                                  IntentLauncherAndroid.ACTION_LOCATION_SOURCE_SETTINGS,
+                                ),
+                            },
+                          ],
+                          { cancelable: false },
+                        );
+                      } else {
+                        this.setState({
+                          isProgressBarVisible: false,
+                          progressBarText: '',
+                        });
+                        Alert.alert(
+                          'Error',
+                          `${
+                            e.message
+                          } Sorry for having this issue, SugoPH team will look into this as soon as possible.`,
+                        );
+                      }
+                    }
+                  }
+                } else {
+                  Alert.alert('Connection Problem.', 'Please check your internet connection');
                 }
-              })
-              .catch(() => {
-                Alert.alert(
-                  'Fetching location failed',
-                  'Please turn on your location.',
-                  [{ text: 'OK' }],
-                  {
-                    cancelable: false,
-                  },
-                );
               });
+            }
+
+            // getLatLongAsync()
+            //   .then(async loc => {
+            //     const { longitude, latitude } = loc.coords;
+            //     updates[`/posts/${postId}/runner/lat`] = latitude;
+            //     updates[`/posts/${postId}/runner/long`] = longitude;
+            //     try {
+            //       await database.ref().update(updates);
+            //       sendNotification(seekerToken, 'Notice', 'Your runner updated location!');
+            //       Alert.alert('Success', 'You have succesfully updated your location!');
+            //     } catch (e) {
+            //       Alert.alert('Error', 'Please check your internet connection');
+            //     }
+            //   })
+            //   .catch(() => {
+            //     Alert.alert(
+            //       'Fetching location failed',
+            //       'Please turn on your location.',
+            //       [{ text: 'OK' }],
+            //       {
+            //         cancelable: false,
+            //       },
+            //     );
+            //   });
           },
         },
         { text: 'Cancel' },
@@ -190,6 +291,37 @@ export default class CurrentSugo extends Component {
     return null;
   };
 
+  onReady = result => {
+    this.mapView.fitToCoordinates(result.coordinates, {
+      edgePadding: {
+        right: width / 20,
+        bottom: height / 20,
+        left: width / 20,
+        top: height / 20,
+      },
+    });
+  };
+
+  onError = errorMessage => {
+    Alert.alert('title', JSON.stringify(errorMessage));
+  };
+
+  renderProgress = () => {
+    const { isProgressBarVisible, progressBarText } = this.state;
+    const { progressbarContainer } = styles;
+    return isProgressBarVisible ? (
+      <View style={progressbarContainer}>
+        <Text style={{ color: GLOBAL_STYLES.BRAND_COLOR }}>{progressBarText}</Text>
+        <ProgressBarAndroid
+          color={GLOBAL_STYLES.BRAND_COLOR}
+          animating
+          styleAttr="Horizontal"
+          style={{ height: 50, width: '100%' }}
+        />
+      </View>
+    ) : null;
+  };
+
   renderView() {
     const { post, isModalVisible, isMsgModalVisible } = this.state;
     const {
@@ -220,6 +352,7 @@ export default class CurrentSugo extends Component {
           desc={post.metadata.desc}
           isVisible={isModalVisible}
           hideModal={this.hideModal}
+          onBackButtonPress={() => this.setState({ isModalVisible: false })}
         />
         <Chat
           post={post}
@@ -245,14 +378,33 @@ export default class CurrentSugo extends Component {
                 style={styles.circle}
               />
             </MapView.Marker>
+            <MapView.Marker coordinate={{ latitude: post.runner.lat, longitude: post.runner.long }}>
+              <Image
+                source={{
+                  uri: post.runner.photoURL || LOGO_URL,
+                }}
+                style={styles.circle}
+              />
+            </MapView.Marker>
+            <MapViewDirections
+              origin={{ latitude: post.runner.lat, longitude: post.runner.long }}
+              destination={{ latitude: post.seeker.lat, longitude: post.seeker.long }}
+              apikey="AIzaSyBETIF-qVoLuMa22CGL2TFD1Y_IaySfGqg"
+              strokeWidth={3}
+              strokeColor={GLOBAL_STYLES.BRAND_COLOR}
+              onError={this.onError}
+            />
           </MapView>
-          <View style={floatingButtonRowContainer}>
-            <TouchableOpacity onPress={this.showModal} style={viewDetailsButtonStyle}>
-              <Text style={{ color: 'white', fontSize: 17 }}>View Details</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={this.updateLocation} style={updateLocationButtonStyle}>
-              <FontAwesome name="location-arrow" size={26} color="white" />
-            </TouchableOpacity>
+          <View>
+            <View style={floatingButtonRowContainer}>
+              <TouchableOpacity onPress={this.showModal} style={viewDetailsButtonStyle}>
+                <Text style={{ color: 'white', fontSize: 17 }}>View Details</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={this.updateLocation} style={updateLocationButtonStyle}>
+                <FontAwesome name="location-arrow" size={26} color="white" />
+              </TouchableOpacity>
+            </View>
+            {this.renderProgress()}
           </View>
           <View style={detailContainer}>
             <View style={logoImageContainer}>
@@ -467,5 +619,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFCA85',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  progressbarContainer: {
+    height: 50,
+    width: '100%',
+    padding: 0,
+    alignItems: 'center',
+    backgroundColor: 'white',
   },
 });

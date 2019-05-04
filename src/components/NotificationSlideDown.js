@@ -3,19 +3,25 @@ import { Text, TouchableHighlight, View, StyleSheet, ScrollView } from 'react-na
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
 
-export default class MyModal extends Component {
+export default class NotifModal extends Component {
   render() {
     const { container, modalCloseStyle, scrollViewStyle, titleTextStyle, descTextStyle } = styles;
-    const { title, desc, isVisible, hideModal } = this.props;
+    const { isVisible, hideModal } = this.props;
     return (
-      <Modal isVisible={isVisible} style={{ margin: 0 }}>
+      <Modal
+        onBackButtonPress={() => hideModal}
+        onBackdropPress={() => hideModal}
+        animationIn="slideInDown"
+        isVisible={isVisible}
+        style={{ margin: 0 }}
+      >
         <View style={container}>
           <TouchableHighlight style={modalCloseStyle} onPress={hideModal}>
             <Ionicons name="md-close-circle-outline" size={28} color="black" />
           </TouchableHighlight>
           <ScrollView style={scrollViewStyle}>
-            <Text style={titleTextStyle}>{title}</Text>
-            <Text style={descTextStyle}>{desc}</Text>
+            <Text style={titleTextStyle}>Title</Text>
+            <Text style={descTextStyle}>Body</Text>
           </ScrollView>
         </View>
       </Modal>
@@ -25,9 +31,8 @@ export default class MyModal extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    height: 50,
     backgroundColor: '#dddddd',
-    marginTop: 100,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
