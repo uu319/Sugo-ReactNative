@@ -9,13 +9,14 @@ import {
   AsyncStorage,
   NetInfo,
   Platform,
+  Image,
 } from 'react-native';
 import t from 'tcomb-form-native';
+import { Location, Permissions, IntentLauncherAndroid } from 'expo';
 import * as firebase from 'firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
-import { Location, Permissions, IntentLauncherAndroid } from 'expo';
-import { MONTHARRAY, GLOBAL_STYLES } from '../components/Constants';
+import { MONTHARRAY, GLOBAL_STYLES, renderSugoLogo } from '../components/Constants';
 import { Spinner } from '../components/common/Spinner';
 
 const { width } = Dimensions.get('window');
@@ -48,6 +49,7 @@ export default class MyModal extends Component {
   initializeForm = () => {
     const { loading } = this.state;
     const editable = !loading;
+    console.log('editable', editable);
     const formStyles = {
       ...Form.stylesheet,
       formGroup: {
@@ -58,10 +60,9 @@ export default class MyModal extends Component {
       controlLabel: {
         normal: {
           color: 'gray',
-          fontSize: 17,
+          fontSize: 14,
           marginBottom: 7,
-          fontWeight: '200',
-          fontStyle: 'italic',
+          fontWeight: '300',
         },
         // the style applied when a validation error occours
         error: {
@@ -75,13 +76,6 @@ export default class MyModal extends Component {
 
     const options = {
       fields: {
-        // Price: {
-        //   editable,
-        //   autoFocus: true,
-        //   label: 'Price (Minimum of 100 pesos)',
-        //   error: 'Service fee should not be lower than 100 pesos.',
-        //   // editable: this.state.editable,
-        // },
         Description: {
           editable,
           multiline: true,
@@ -98,7 +92,6 @@ export default class MyModal extends Component {
               normal: {
                 ...Form.stylesheet.textbox.normal,
                 height: 130,
-                color: '#484848',
                 textAlignVertical: 'top',
                 padding: 10,
                 backgroundColor: 'white',
@@ -115,9 +108,10 @@ export default class MyModal extends Component {
     this.setState({ options });
   };
 
-  // handleSubmit = () => {
-  //   const value = this._form.getValue();
-  // };
+  handleSubmit = () => {
+    const value = this._form.getValue();
+    console.log('value: ', value);
+  };
 
   storePostToLocalStorage = async postId => {
     try {
@@ -129,9 +123,9 @@ export default class MyModal extends Component {
   };
 
   insertPost = () => {
-    this.setState({ loading: true });
     const value = this._form.getValue();
     const desc = value.Description;
+    this.setState({ loading: true });
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
     const { uid, displayName, email, photoURL, catName, token } = params;
@@ -217,7 +211,7 @@ export default class MyModal extends Component {
                   'Error',
                   `${
                     e.message
-                  } Sorry for having this issue, SugoPH team will look into this as soon as possible.`,
+                  } Please try again. Sorry for having this issue, SugoPH team will look into this as soon as possible.`,
                 );
               }
             }
@@ -237,6 +231,7 @@ export default class MyModal extends Component {
     const { loading, value } = this.state;
     const price = value.Price;
     const desc = value.Description;
+    console.log('pricedesc', `${price}${desc}`);
     const { btnSubmitStyle } = styles;
     let disabled = true;
     if (!(price === '' || desc === '')) {
@@ -244,10 +239,9 @@ export default class MyModal extends Component {
     }
 
     const backgroundColor = disabled ? '#FFCA85' : GLOBAL_STYLES.BRAND_COLOR;
+    console.log('disabled', disabled);
     return loading ? (
-      <View style={{ height: 40, alignItems: 'center', justifyContent: 'center' }}>
-        <Spinner />
-      </View>
+      <Spinner />
     ) : (
       <TouchableOpacity
         disabled={disabled}
@@ -261,7 +255,7 @@ export default class MyModal extends Component {
 
   render() {
     const { value, options } = this.state;
-    const { container, headerContainerStyle } = styles;
+    const { container, headerContainerStyle, catNameStyle } = styles;
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
     const { catName } = params;
@@ -272,11 +266,26 @@ export default class MyModal extends Component {
             onPress={() => navigation.goBack()}
             name="ios-arrow-back"
             size={40}
-            color="black"
+            color="#BDBDBD"
           />
         </View>
         <View style={container}>
-          <Text style={{ fontSize: 30, alignSelf: 'center' }}>{catName}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              width: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Image
+              source={renderSugoLogo(catName)}
+              style={{ height: 30, width: 30, borderRadius: 5, marginRight: 7 }}
+            />
+            <Text adjustsFontSizeToFit style={catNameStyle}>
+              {catName}
+            </Text>
+          </View>
           <Form
             ref={c => {
               this._form = c;
@@ -286,7 +295,11 @@ export default class MyModal extends Component {
             value={value}
             onChange={val => this.setState({ value: val })}
           />
-          <View style={{ marginTop: 10 }}>{this.renderButton()}</View>
+          <View
+            style={{ marginTop: 10, height: 40, justifyContent: 'center', alignItems: 'center' }}
+          >
+            {this.renderButton()}
+          </View>
         </View>
       </View>
     );
@@ -304,6 +317,9 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 1, width: 1 },
     shadowColor: 'gray',
     elevation: 1,
+  },
+  catNameStyle: {
+    alignSelf: 'center',
   },
   headerContainerStyle: {
     height: 60,

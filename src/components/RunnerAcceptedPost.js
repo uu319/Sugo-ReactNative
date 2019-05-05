@@ -73,13 +73,13 @@ export default class CurrentSugo extends Component {
     const { post } = this.state;
     const { metadata } = post;
     const { timeStarted } = metadata;
-    const initialTimeNow = new Date().getTime();
-    let initialMilliseconds = initialTimeNow - timeStarted;
-    this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
+    const timeNow = new Date().getTime();
+    let initialSeconds = (timeNow - timeStarted) / 1000;
+    this.setState({ momentAgo: getMomentAgo(initialSeconds) });
     if (post !== '') {
       this.countdownInterval = setInterval(async () => {
-        initialMilliseconds += 65000;
-        this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
+        initialSeconds += 65;
+        this.setState({ momentAgo: getMomentAgo(initialSeconds) });
       }, 60000);
     }
   };
@@ -277,14 +277,18 @@ export default class CurrentSugo extends Component {
     if (post.metadata.status === 'accepted') {
       return (
         <TouchableOpacity onPress={() => this.onUpdateSugoStatus('started')} style={btnToggleStyle}>
-          <Text style={{ color: 'white', fontSize: 15 }}>Start</Text>
+          <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+            Start
+          </Text>
         </TouchableOpacity>
       );
     }
     if (post.metadata.status === 'started') {
       return (
         <TouchableOpacity onPress={() => this.onUpdateSugoStatus('done')} style={btnToggleStyle}>
-          <Text style={{ color: 'white', fontSize: 15 }}>Done</Text>
+          <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+            Done
+          </Text>
         </TouchableOpacity>
       );
     }
@@ -398,7 +402,9 @@ export default class CurrentSugo extends Component {
           <View>
             <View style={floatingButtonRowContainer}>
               <TouchableOpacity onPress={this.showModal} style={viewDetailsButtonStyle}>
-                <Text style={{ color: 'white', fontSize: 17 }}>View Details</Text>
+                <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+                  View Details
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={this.updateLocation} style={updateLocationButtonStyle}>
                 <FontAwesome name="location-arrow" size={26} color="white" />

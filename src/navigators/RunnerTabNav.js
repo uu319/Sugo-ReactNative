@@ -1,8 +1,7 @@
 import React from 'react';
 import { createAppContainer, createBottomTabNavigator } from 'react-navigation';
-import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import RunnerSugoScreen from '../ScreenRunner/RunnerSugoScreen';
-import About from '../ScreenMutual/AboutScreen';
 import Profile from '../ScreenMutual/ProfileScreen';
 
 const RunnerTabNavigator = createAppContainer(

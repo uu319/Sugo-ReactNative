@@ -57,8 +57,8 @@ class Login extends Component {
   initAsync = async () => {
     try {
       await GoogleSignIn.initAsync({
-        isOfflineEnabled: true,
-        isPromptEnabled: true,
+        // scopes: ['profile', 'email'],
+        // behavior: 'web',
         clientId: '93206224262-6vujqo0h2uiqg74necvl44lh51nor80d.apps.googleusercontent.com',
       });
     } catch ({ message }) {

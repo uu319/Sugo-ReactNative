@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SugoPhApp",
-    "slug": "SugoPhApp",
+    "name": "SugoPh",
+    "slug": "SugoPh",
     "privacy": "public",
     "sdkVersion": "32.0.0",
     "description": "An online marketplace for services.",
@@ -11,9 +11,9 @@
     ],
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/appIcon.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/sugoSplash2.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -24,17 +24,16 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
       "bundleIdentifier": "com.StickyNotes.SugoPhApp",
       "config": {
-        "googleMapsApiKey": "AIzaSyBETIF-qVoLuMa22CGL2TFD1Y_IaySfGqg",
+        "googleMapsApiKey": "AIzaSyBGa2ob4NtokBaBFS0y8SCXm-hZoJsVJmY",
         "googleSignIn": {
           "reservedClientId": "com.googleusercontent.apps.93206224262-6vujqo0h2uiqg74necvl44lh51nor80d"
         }
       }
     },
     "android": {
-  
+
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
@@ -43,6 +42,14 @@
 
       },
       "package": "com.StickyNotes.SugoPhApp",
-    }
+    },
+    "notification": {
+
+   "color": "#dddddd",
+   "icon": "./assets/notifIcon.png",
+   "androidMode": "collapse",
+
+   "androidCollapsedTitle": "SugoPH Notifications"
+ }
   }
 }

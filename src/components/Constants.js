@@ -49,9 +49,9 @@ export const MONTHARRAY = [
   'Dec',
 ];
 
-export function getMomentAgo(milliseconds) {
+export function getMomentAgo(seconds) {
   let momentAgo = '';
-  const seconds = milliseconds / 1000;
+  // const seconds = milliseconds / 1000;
   const minutes = seconds / 60;
   const hour = minutes / 60;
   const day = hour / 24;

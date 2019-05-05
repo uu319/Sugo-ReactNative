@@ -1,18 +1,19 @@
 import React from 'react';
 import * as firebase from 'firebase';
-import { AppLoading, Asset, Font, Notifications } from 'expo';
+import { AppLoading, Asset, Font } from 'expo';
 import {
   Ionicons,
   MaterialCommunityIcons,
   MaterialIcons,
   AntDesign,
   FontAwesome,
-  Alert,
 } from '@expo/vector-icons';
 import SwitchNav from './src/navigators/MainNav';
 import { firebaseConfig } from './src/components/Constants';
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 export default class App extends React.Component {
   state = {

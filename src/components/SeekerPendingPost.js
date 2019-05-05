@@ -1,33 +1,36 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES } from './Constants';
+import { GLOBAL_STYLES, renderSugoLogo } from './Constants';
 
 export default class PendingPost extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      postObject: null,
+      post: '',
     };
   }
 
-  componentDidMount() {
-    this.getPostObject();
+  componentWillReceiveProps(newProps) {
+    const oldProps = this.props;
+    if (oldProps.post !== newProps.post) {
+      this.setState({ post: newProps.post });
+    }
   }
 
   getPostObject = () => {
     const { postId } = this.props;
     const database = firebase.database();
     database.ref(`posts/${postId}`).once('value', snapshot => {
-      this.setState({ postObject: snapshot.val() });
+      this.setState({ post: snapshot.val() });
     });
   };
 
   onCancelSugo = async () => {
-    const { postObject } = this.state;
-    const { postId, seeker } = postObject;
+    const { post } = this.state;
+    const { postId, seeker } = post;
     const { seekerId } = seeker;
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = 'cancelled';
@@ -59,9 +62,9 @@ export default class PendingPost extends Component {
   };
 
   renderCancelButton = () => {
-    const { postObject } = this.state;
+    const { post } = this.state;
     const { btnCancelStyle } = styles;
-    return postObject ? (
+    return post ? (
       <TouchableOpacity onPress={this.onCancelSugo} style={btnCancelStyle}>
         <Text style={{ color: 'white', fontSize: 20 }}>Cancel</Text>
       </TouchableOpacity>
@@ -69,7 +72,17 @@ export default class PendingPost extends Component {
   };
 
   render() {
-    const { headerContainer, headerImageStyle, headerImageContainer } = styles;
+    const { post } = this.state;
+    const {
+      headerContainer,
+      headerImageStyle,
+      headerImageContainer,
+      scrollViewStyle,
+      sugoLogoStyle,
+      titleContainerStyle,
+      upperContainerStyle,
+      lowerContainerStyle,
+    } = styles;
     return (
       <View style={{ flex: 1 }}>
         <View style={headerContainer}>
@@ -77,30 +90,35 @@ export default class PendingPost extends Component {
             <Image source={require('../myassets/sugoLogoOrange.png')} style={headerImageStyle} />
           </View>
         </View>
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-          }}
-        >
-          <Image
-            source={require('../myassets/pending.gif')}
-            resizeMode="contain"
-            style={{
-              width: 60,
-              height: 60,
-            }}
-          />
-          <Text style={{ fontSize: 13, color: '#8597A4' }}>Waiting for Runner</Text>
+        <View style={upperContainerStyle}>
+          {post !== '' ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+              <View style={titleContainerStyle}>
+                <Image source={renderSugoLogo(post.metadata.title)} style={sugoLogoStyle} />
+                <Text>{post !== '' ? post.metadata.title : ''}</Text>
+              </View>
+              <ScrollView style={scrollViewStyle}>
+                <Text style={{ fontStyle: 'italic', color: 'gray' }}>
+                  {post !== '' ? post.metadata.desc : ''}
+                </Text>
+              </ScrollView>
+            </View>
+          ) : null}
         </View>
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+        <View style={lowerContainerStyle}>
+          <View style={{ alignItems: 'center' }}>
+            <Image
+              source={require('../myassets/pending.gif')}
+              resizeMode="contain"
+              style={{
+                width: 60,
+                height: 60,
+              }}
+            />
+            <Text style={{ fontSize: 13, color: '#8597A4', marginBottom: 20 }}>
+              Waiting for Runner
+            </Text>
+          </View>
           {this.renderCancelButton()}
         </View>
       </View>
@@ -131,6 +149,31 @@ const styles = StyleSheet.create({
     width: null,
     height: null,
     resizeMode: 'contain',
+    flex: 1,
+  },
+  sugoLogoStyle: {
+    height: 20,
+    width: 20,
+    borderRadius: 5,
+    marginRight: 5,
+  },
+  upperContainerStyle: {
+    height: '30%',
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  lowerContainerStyle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  titleContainerStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  scrollViewStyle: {
     flex: 1,
   },
 });

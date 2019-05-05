@@ -34,49 +34,6 @@ export default class SugoItem extends Component {
     clearInterval(this.countdownInterval);
   }
 
-  // acceptSugo = async (post, lat, long) => {
-  //   const { userInfo } = this.props;
-  //   const { email, userId, displayName, photoURL, token } = userInfo;
-  //   const { postId, seeker } = post;
-  //   const { seekerId, seekerToken } = seeker;
-  //   const runner = {
-  //     email,
-  //     runnerId: userId,
-  //     lat,
-  //     long,
-  //     displayName,
-  //     photoURL,
-  //     withMessage: 'false',
-  //     runnerToken: token,
-  //   };
-  //   const updates = {};
-  //   updates[`/posts/${postId}/metadata/status`] = 'accepted';
-  //   updates[`/posts/${postId}/runner`] = runner;
-  //   updates[`/users/${seekerId}/currentPost`] = postId;
-  //   updates[`/users/${seekerId}/currentPostStatus`] = 'accepted';
-  //   updates[`/users/${userId}/currentPostStatus`] = 'accepted';
-  //   updates[`/users/${userId}/currentPost`] = postId;
-  //   const database = firebase.database();
-  //   try {
-  //     await database.ref(`posts/${postId}/metadata/status`).once('value', async snapshot => {
-  //       if (snapshot.val() === 'pending') {
-  //         try {
-  //           await database.ref().update(updates);
-  //           sendNotification(seekerToken, 'Horay!', 'Someone accepted your sugo');
-  //           this.setState({ isModalVisible: false });
-  //           this.setState({ isProgressBarVisible: false });
-  //         } catch (e) {
-  //           Alert.alert('Something went wrong please try again');
-  //         }
-  //       } else {
-  //         Alert.alert('Something went wrong please try again');
-  //       }
-  //     });
-  //   } catch (e) {
-  //     Alert.alert('Something went wrong please try again');
-  //   }
-  // };
-
   acceptSugo = async post => {
     const { userInfo } = this.props;
     const { email, userId, displayName, photoURL, token } = userInfo;
@@ -160,21 +117,6 @@ export default class SugoItem extends Component {
     }
   };
 
-  // acceptSugo = post => {
-  //   this.setState({ isProgressBarVisible: true });
-  //   getLatLongAsync()
-  //     .then(loc => {
-  //       const { longitude, latitude } = loc.coords;
-  //       this.updateSugoOnFirebase(post, latitude, longitude);
-  //     })
-  //     .catch(() => {
-  //       this.setState({ isProgressBarVisible: false });
-  //       Alert.alert('Fetching location failed', 'Please turn on your location.', [{ text: 'OK' }], {
-  //         cancelable: false,
-  //       });
-  //     });
-  // };
-
   showModal = () => {
     this.setState({ isModalVisible: true });
   };
@@ -207,13 +149,13 @@ export default class SugoItem extends Component {
     const { metadata } = post;
     const { timeStamp } = metadata;
     const initialTimeNow = new Date().getTime();
-    const initialMilliseconds = initialTimeNow - timeStamp;
-    this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
+    const initialSeconds = (initialTimeNow - timeStamp) / 1000;
+    this.setState({ momentAgo: getMomentAgo(initialSeconds) });
     if (post !== '') {
       this.countdownInterval = setInterval(() => {
         const timeNow = new Date().getTime();
-        const milliseconds = timeNow - timeStamp;
-        this.setState({ momentAgo: getMomentAgo(milliseconds) });
+        const seconds = (timeNow - timeStamp) / 1000;
+        this.setState({ momentAgo: getMomentAgo(seconds) });
       }, 10000);
     }
   };
@@ -272,8 +214,6 @@ const styles = StyleSheet.create({
   container: {
     height: 110,
     width: '95%',
-    // borderColor: '#dddddd',
-    // borderWidth: 0.4,
     borderRadius: 10,
     alignSelf: 'center',
     overflow: 'hidden',

@@ -14,10 +14,9 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Alert,
-  BackHandler,
   Image,
 } from 'react-native';
-import { Constants, ImagePicker, Permissions } from 'expo';
+import { ImagePicker } from 'expo';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import { Ionicons } from '@expo/vector-icons';
 import { timeTo12HrFormat, GLOBAL_STYLES } from '../components/Constants';
@@ -33,7 +32,6 @@ export default class ChatApp extends Component {
       textMessage: '',
       messageList: [],
       type: '',
-      image:'',
       loading: false,
     };
   }
@@ -237,7 +235,7 @@ export default class ChatApp extends Component {
   };
 
   render() {
-    const { textMessage, messageList } = this.state;
+    const { textMessage } = this.state;
     const {
       container,
       inputStyle,

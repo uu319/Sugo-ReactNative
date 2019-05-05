@@ -51,16 +51,13 @@ export default class AcceptedPost extends Component {
     const { post } = this.state;
     const { metadata } = post;
     const { timeStarted } = metadata;
-    const initialTimeNow = new Date().getTime();
-    let initialMilliseconds = initialTimeNow - timeStarted;
-    this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
+    const timeNow = new Date().getTime();
+    let initialSeconds = (timeNow - timeStarted) / 1000;
+    this.setState({ momentAgo: getMomentAgo(initialSeconds) });
     if (post !== '') {
       this.countdownInterval = setInterval(async () => {
-        const timeNow = await new Date().getTime();
-        if (timeNow) {
-          initialMilliseconds += 62000;
-          this.setState({ momentAgo: getMomentAgo(initialMilliseconds) });
-        }
+        initialSeconds += 65;
+        this.setState({ momentAgo: getMomentAgo(initialSeconds) });
       }, 60000);
     }
   };
@@ -546,7 +543,9 @@ export default class AcceptedPost extends Component {
                   onPress={this.onCancelSugo}
                   style={[twinButtonStyle, { backgroundColor: '#EB5757' }]}
                 >
-                  <Text style={{ color: 'white', fontSize: 17 }}>Cancel</Text>
+                  <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
               </View>
               <View style={twinButtonContainer}>
@@ -554,7 +553,9 @@ export default class AcceptedPost extends Component {
                   onPress={this.showSugoModal}
                   style={[twinButtonStyle, { backgroundColor: '#29AB87' }]}
                 >
-                  <Text style={{ color: 'white', fontSize: 17 }}>View Details</Text>
+                  <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+                    View Details
+                  </Text>
                 </TouchableOpacity>
               </View>
               <TouchableOpacity onPress={this.updateLocation} style={updateLocationButtonStyle}>

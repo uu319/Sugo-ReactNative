@@ -1,13 +1,11 @@
 import React, { Component } from 'react';
 import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackHandler } from 'react-native';
-import { Notifications } from 'expo';
 import * as firebase from 'firebase';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import PendingPost from '../components/SeekerPendingPost';
 import AcceptedPost from '../components/SeekerAcceptedPost';
 import Categories from '../components/Categories';
 import Loading from '../components/Loading';
-import NotifModal from '../components/NotificationSlideDown';
 
 export default class Sugo extends Component {
   constructor(props) {
@@ -19,7 +17,7 @@ export default class Sugo extends Component {
       currentPostObject: {},
       currentPostId: '',
       uid: '',
-      isNotificationModalVisible: false,
+      token: '',
     };
   }
 
@@ -32,21 +30,12 @@ export default class Sugo extends Component {
 
   componentDidMount() {
     BackHandler.addEventListener('hardwareBackPress', this.onBackButtonPressAndroid);
-    // this._notificationSubscription = Notifications.addListener(this._handleNotification);
     this.listenUser();
   }
 
   componentWillUnmount() {
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackPress);
   }
-
-  // handleNotification = notifications => {
-  //   this.setState({ isNotificationModalVisible: true });
-  // };
-
-  hideModal = () => {
-    this.setState({ isNotificationModalVisible: false });
-  };
 
   onBackButtonPressAndroid = () => {
     return true;
@@ -65,11 +54,7 @@ export default class Sugo extends Component {
         currentPostId: currentPost,
         token,
       });
-      if (
-        currentPostStatus === 'accepted' ||
-        currentPostStatus === 'started' ||
-        currentPostStatus === 'done'
-      ) {
+      if (currentPostStatus !== 'none') {
         await AsyncStorage.setItem('currentPost', currentPost);
         this.listenPost(currentPost);
       }
@@ -102,7 +87,9 @@ export default class Sugo extends Component {
   };
 
   renderBody = () => {
+
     const { currentPostStatus, currentPostObject, currentPostId } = this.state;
+    console.log('yyy',currentPostObject);
     const { navigation } = this.props;
     if (currentPostStatus === 'loading') {
       return <Loading />;
@@ -111,20 +98,14 @@ export default class Sugo extends Component {
       return <Categories onCatPress={this.onCatPress} />;
     }
     if (currentPostStatus === 'pending') {
-      return <PendingPost postId={currentPostId} />;
+      return <PendingPost post={currentPostObject} />;
     }
     return <AcceptedPost post={currentPostObject} navProp={navigation} />;
   };
 
   render() {
-    const { isNotificationModalVisible } = this.state;
     const { container } = styles;
-    return (
-      <SafeAreaView style={container}>
-        <NotifModal isVisible={isNotificationModalVisible} hideModal={this.hideModal} />
-        {this.renderBody()}
-      </SafeAreaView>
-    );
+    return <SafeAreaView style={container}>{this.renderBody()}</SafeAreaView>;
   }
 }
 

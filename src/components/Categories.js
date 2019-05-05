@@ -32,12 +32,12 @@ export default class Categories extends Component {
           <View style={{ flex: 1, flexDirection: 'row' }}>
             <Category
               imageUri={require('../myassets/sugoDocuments.png')}
-              name="Household Chores"
+              name="Filing/Claiming of Documents"
               onPress={() => onCatPress('Filing/Claiming of Documents')}
             />
             <Category
               imageUri={require('../myassets/sugoBillsPayment.png')}
-              name="Pickup/ Delivery"
+              name="Bills Payment"
               onPress={() => onCatPress('Bills Payment')}
             />
           </View>
