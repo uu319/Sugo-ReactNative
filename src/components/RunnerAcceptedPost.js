@@ -69,17 +69,33 @@ export default class CurrentSugo extends Component {
     this.setState({ isMsgModalVisible: false });
   };
 
+  // renderMomentAgo = () => {
+  //   const { post } = this.state;
+  //   const { metadata } = post;
+  //   const { timeStarted } = metadata;
+  //   const timeNow = new Date().getTime();
+  //   let initialSeconds = (timeNow - timeStarted) / 1000;
+  //   this.setState({ momentAgo: getMomentAgo(initialSeconds) });
+  //   if (post !== '') {
+  //     this.countdownInterval = setInterval(async () => {
+  //       initialSeconds += 65;
+  //       this.setState({ momentAgo: getMomentAgo(initialSeconds) });
+  //     }, 60000);
+  //   }
+  // };
+
   renderMomentAgo = () => {
-    const { post } = this.state;
+    const { post } = this.props;
     const { metadata } = post;
-    const { timeStarted } = metadata;
-    const timeNow = new Date().getTime();
-    let initialSeconds = (timeNow - timeStarted) / 1000;
+    const { timeStamp } = metadata;
+    const initialTimeNow = new Date().getTime();
+    const initialSeconds = (initialTimeNow - timeStamp) / 1000;
     this.setState({ momentAgo: getMomentAgo(initialSeconds) });
     if (post !== '') {
       this.countdownInterval = setInterval(async () => {
-        initialSeconds += 65;
-        this.setState({ momentAgo: getMomentAgo(initialSeconds) });
+        const timeNow = new Date().getTime();
+        const seconds = (timeNow - timeStamp) / 1000;
+        this.setState({ momentAgo: getMomentAgo(seconds) });
       }, 60000);
     }
   };
@@ -251,7 +267,9 @@ export default class CurrentSugo extends Component {
       return (
         <View style={{ flexDirection: 'row' }}>
           <AntDesign name="ellipsis1" size={14} color="white" />
-          <Text style={{ marginLeft: 5, color: 'white' }}>Waiting to start</Text>
+          <Text adjustsFontSizeToFit style={{ marginLeft: 5, color: 'white' }}>
+            Waiting to start
+          </Text>
         </View>
       );
     }
@@ -259,14 +277,18 @@ export default class CurrentSugo extends Component {
       return (
         <View style={{ flexDirection: 'row' }}>
           <Ionicons name="ios-timer" size={14} color="white" />
-          <Text style={{ marginLeft: 5, color: 'white' }}>{momentAgo} time spent</Text>
+          <Text adjustsFontSizeToFit style={{ marginLeft: 5, color: 'white' }}>
+            {momentAgo} time spent
+          </Text>
         </View>
       );
     }
     return (
       <View style={{ flexDirection: 'row' }}>
         <AntDesign name="ellipsis1" size={14} color="white" />
-        <Text style={{ marginLeft: 5, color: 'white' }}>Waiting for confirmation</Text>
+        <Text adjustsFontSizeToFit style={{ marginLeft: 5, color: 'white' }}>
+          Waiting for confirmation
+        </Text>
       </View>
     );
   };

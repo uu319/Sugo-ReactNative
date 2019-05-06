@@ -62,7 +62,7 @@ class Login extends Component {
         clientId: '93206224262-6vujqo0h2uiqg74necvl44lh51nor80d.apps.googleusercontent.com',
       });
     } catch ({ message }) {
-      Alert.alert('Something went wrong please try again.');
+      Alert.alert('Error', 'Something went wrong, please try again');
     }
   };
 
@@ -84,7 +84,7 @@ class Login extends Component {
       }
     } catch ({ message }) {
       this.setState({ loading: false });
-      Alert.alert('Something went wrong, please try again.');
+      Alert.alert('Error', 'Something went wrong, please try again');
     }
   };
 
@@ -118,6 +118,7 @@ class Login extends Component {
         token,
       });
     } catch (e) {
+      Alert.alert('Error', 'Something went wrong, please try again');
       this.setState({ loading: false });
     }
   };

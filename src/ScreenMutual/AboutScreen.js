@@ -18,6 +18,10 @@ export default class About extends Component {
 /* "permissions": [
   "ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION"
 ], */
+
+/* "googleSignIn": {
+            "certificateHash": "B5:4A:A8:C5:6E:8B:23:D3:B4:19:5F:74:EA:D7:D6:8B:33:3D:8D:CB"
+        } */
 const styles = StyleSheet.create({
   container: {
     flex: 1,

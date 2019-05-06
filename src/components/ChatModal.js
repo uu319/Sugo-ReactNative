@@ -270,16 +270,16 @@ export default class Chat extends Component {
       >
         <View style={container}>
           <View style={headerContainerStyle}>
-            <Ionicons
+            <TouchableOpacity
+              style={{ flexDirection: 'row' }}
               onPress={() => {
                 this.onBackPress();
                 hideModal();
               }}
-              name="ios-arrow-back"
-              size={40}
-              color="black"
-            />
-            <Text style={{ fontSize: 30, fontWeight: '600', marginLeft: 20 }}>Chats</Text>
+            >
+              <Ionicons name="ios-arrow-back" size={40} color="black" />
+              <Text style={{ fontSize: 30, fontWeight: '600', marginLeft: 20 }}>Chats</Text>
+            </TouchableOpacity>
           </View>
           {this.renderFlatList()}
           <View
