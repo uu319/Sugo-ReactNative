@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackHandler } from 'react-native';
+import { SafeAreaView, Platform, AsyncStorage, StyleSheet, BackHandler, Text } from 'react-native';
 import * as firebase from 'firebase';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
+import { Notifications } from 'expo';
 import PendingPost from '../components/SeekerPendingPost';
 import AcceptedPost from '../components/SeekerAcceptedPost';
 import Categories from '../components/Categories';
@@ -15,9 +16,9 @@ export default class Sugo extends Component {
       userInfo: '',
       currentPostStatus: 'loading',
       currentPostObject: {},
-      currentPostId: '',
       uid: '',
       token: '',
+      notification: '',
     };
   }
 
@@ -29,6 +30,7 @@ export default class Sugo extends Component {
   }
 
   componentDidMount() {
+    this._notificationSubscription = Notifications.addListener(this._handleNotification);
     BackHandler.addEventListener('hardwareBackPress', this.onBackButtonPressAndroid);
     this.listenUser();
   }
@@ -37,7 +39,12 @@ export default class Sugo extends Component {
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackPress);
   }
 
+  _handleNotification = notification => {
+    this.setState({ notification });
+  };
+
   onBackButtonPressAndroid = () => {
+    BackHandler.exitApp();
     return true;
   };
 
@@ -51,7 +58,6 @@ export default class Sugo extends Component {
         userInfo: snapshot.val(),
         uid,
         currentPostStatus,
-        currentPostId: currentPost,
         token,
       });
       if (currentPostStatus !== 'none') {
@@ -87,9 +93,7 @@ export default class Sugo extends Component {
   };
 
   renderBody = () => {
-
-    const { currentPostStatus, currentPostObject, currentPostId } = this.state;
-    console.log('yyy',currentPostObject);
+    const { currentPostStatus, currentPostObject } = this.state;
     const { navigation } = this.props;
     if (currentPostStatus === 'loading') {
       return <Loading />;
@@ -104,8 +108,15 @@ export default class Sugo extends Component {
   };
 
   render() {
+    const { notification } = this.state;
+    console.log(JSON.stringify(notification));
     const { container } = styles;
-    return <SafeAreaView style={container}>{this.renderBody()}</SafeAreaView>;
+    return (
+      <SafeAreaView style={container}>
+        <Text>{JSON.stringify(this.state.notification)}</Text>
+        {this.renderBody()}
+      </SafeAreaView>
+    );
   }
 }
 

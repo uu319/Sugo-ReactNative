@@ -116,6 +116,10 @@ export function sendNotification(token, title, body) {
       sound: 'default',
       title,
       body,
+      data: {
+        message: 'sample',
+        sampl1: 'sample2',
+      },
     }),
   });
 }

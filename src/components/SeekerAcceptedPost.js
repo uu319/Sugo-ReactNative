@@ -99,7 +99,7 @@ export default class AcceptedPost extends Component {
     this.setState({ isSugoModalVisible: true });
   };
 
-  hideModal = () => {
+  hideMsgModal = () => {
     this.setState({ isSugoModalVisible: false });
   };
 
@@ -108,14 +108,6 @@ export default class AcceptedPost extends Component {
   };
 
   hideMsgModal = () => {
-    this.setState({ isMsgModalVisible: false });
-  };
-
-  showFeedBackModal = () => {
-    this.setState({ isMsgModalVisible: true });
-  };
-
-  hideFeedBackModal = () => {
     this.setState({ isMsgModalVisible: false });
   };
 
@@ -508,7 +500,7 @@ export default class AcceptedPost extends Component {
           title={post.metadata.title}
           desc={post.metadata.desc}
           isVisible={isSugoModalVisible}
-          hideModal={this.hideModal}
+          hideModal={this.hideMsgModal}
         />
         <Chat
           post={post}
