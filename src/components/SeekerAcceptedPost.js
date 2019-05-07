@@ -469,6 +469,8 @@ export default class AcceptedPost extends Component {
     ) : null;
   };
 
+  // AIzaSyBETIF-qVoLuMa22CGL2TFD1Y_IaySfGqg
+
   renderView() {
     const { post, isSugoModalVisible, isMsgModalVisible } = this.state;
     const {
@@ -529,7 +531,7 @@ export default class AcceptedPost extends Component {
             <MapViewDirections
               origin={{ latitude: post.runner.lat, longitude: post.runner.long }}
               destination={{ latitude: post.seeker.lat, longitude: post.seeker.long }}
-              apikey="AIzaSyBETIF-qVoLuMa22CGL2TFD1Y_IaySfGqg"
+              apikey="AIzaSyBGa2ob4NtokBaBFS0y8SCXm-hZoJsVJmY"
               strokeWidth={3}
               strokeColor={GLOBAL_STYLES.BRAND_COLOR}
               onError={this.onError}

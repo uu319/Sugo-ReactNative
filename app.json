@@ -33,13 +33,13 @@
       }
     },
     "android": {
-
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBGa2ob4NtokBaBFS0y8SCXm-hZoJsVJmY",
         },
-      
+
       },
       "package": "com.StickyNotes.SugoPhApp",
     },
