@@ -31,13 +31,23 @@ export default class AcceptedPost extends Component {
       isMsgModalVisible: false,
       isProgressBarVisible: false,
       progressBarText: '',
+      region: '',
     };
   }
 
   componentWillReceiveProps(newProps) {
     const oldProps = this.props;
     if (oldProps.post !== newProps.post) {
-      this.setState({ post: newProps.post }, () => {
+      const { post } = newProps;
+      const { runner } = post;
+      const { lat, long } = runner;
+      const region = {
+        latitude: lat,
+        longitude: long,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
+      this.setState({ post, region }, () => {
         this.renderMomentAgo();
       });
     }
@@ -50,14 +60,14 @@ export default class AcceptedPost extends Component {
   renderMomentAgo = () => {
     const { post } = this.props;
     const { metadata } = post;
-    const { timeStamp } = metadata;
+    const { timeStarted } = metadata;
     const initialTimeNow = new Date().getTime();
-    const initialSeconds = (initialTimeNow - timeStamp) / 1000;
+    const initialSeconds = (initialTimeNow - timeStarted) / 1000;
     this.setState({ momentAgo: getMomentAgo(initialSeconds) });
     if (post !== '') {
       this.countdownInterval = setInterval(async () => {
         const timeNow = new Date().getTime();
-        const seconds = (timeNow - timeStamp) / 1000;
+        const seconds = (timeNow - timeStarted) / 1000;
         this.setState({ momentAgo: getMomentAgo(seconds) });
       }, 60000);
     }
@@ -99,7 +109,7 @@ export default class AcceptedPost extends Component {
     this.setState({ isSugoModalVisible: true });
   };
 
-  hideMsgModal = () => {
+  hideSugoModal = () => {
     this.setState({ isSugoModalVisible: false });
   };
 
@@ -148,7 +158,11 @@ export default class AcceptedPost extends Component {
                       isProgressBarVisible: false,
                       progressBarText: '',
                     });
-                    Alert.alert('Error', message);
+                    Alert.alert(
+                      'Error',
+                      'Sorry for having this issue, SugoPH team will look into this as soon as possible.',
+                    );
+                    database.ref('errors').push(message);
                   }
                 } else {
                   Alert.alert('Connection Problem.', 'Please check your internet connection');
@@ -163,39 +177,17 @@ export default class AcceptedPost extends Component {
         cancelable: false,
       },
     );
-    // Alert.alert(
-    //   'Warning',
-    //   'Are you sure you want to cancel sugo?',
-    //   [
-    //     {
-    //       text: 'OK',
-    //       onPress: async () => {
-    //         try {
-    //           await database.ref().update(updates);
-    //           sendNotification(runnerToken, 'Sorry', 'Your seeker cancelled the transaction');
-    //         } catch (e) {
-    //           Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
-    //             cancelable: false,
-    //           });
-    //         }
-    //       },
-    //     },
-    //     { text: 'Cancel' },
-    //   ],
-    //   {
-    //     cancelable: false,
-    //   },
-    // );
   };
 
   onConfirmSugo = async () => {
+    const database = firebase.database();
     const { post, momentAgo } = this.state;
     const { postId, runner, seeker } = post;
     const { seekerId } = seeker;
     const { runnerId, runnerToken } = runner;
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = 'confirmed';
-    updates[`/posts/${postId}/metadata/momentAgo`] = momentAgo;
+    updates[`/posts/${postId}/metadata/timeSpent`] = momentAgo;
     updates[`/users/${seekerId}/currentPostStatus`] = 'none';
     updates[`/users/${seekerId}/currentPost`] = '';
     updates[`/users/${runnerId}/currentPostStatus`] = 'none';
@@ -215,7 +207,6 @@ export default class AcceptedPost extends Component {
                     progressBarText: 'Confirming, please wait.',
                   });
                   try {
-                    const database = firebase.database();
                     await database.ref().update(updates);
                     this.setState({
                       isProgressBarVisible: false,
@@ -231,7 +222,11 @@ export default class AcceptedPost extends Component {
                       isProgressBarVisible: false,
                       progressBarText: '',
                     });
-                    Alert.alert('Error', message);
+                    Alert.alert(
+                      'Error',
+                      'Sorry for having this issue, SugoPH team will look into this as soon as possible.',
+                    );
+                    database.ref('errors').push(message);
                   }
                 } else {
                   Alert.alert('Connection Problem.', 'Please check your internet connection');
@@ -246,38 +241,6 @@ export default class AcceptedPost extends Component {
         cancelable: false,
       },
     );
-    // Alert.alert(
-    //   'Thank you.',
-    //   'Good to have served yoo.',
-    //   [
-    //     {
-    //       text: 'OK',
-    //       onPress: async () => {
-    //         try {
-    //           const database = firebase.database();
-    //           try {
-    //             await database.ref().update(updates);
-    //           } catch (e) {
-    //             Alert.alert('Error', 'Please check your internet connection');
-    //           }
-    //           sendNotification(
-    //             runnerToken,
-    //             'Hooray!',
-    //             'Your seeker confirmed the transaction as done.',
-    //           );
-    //         } catch (e) {
-    //           Alert.alert('Connection Problem', 'Please try again', [{ text: 'OK' }], {
-    //             cancelable: false,
-    //           });
-    //         }
-    //       },
-    //     },
-    //     { text: 'Cancel' },
-    //   ],
-    //   {
-    //     cancelable: false,
-    //   },
-    // );
   };
 
   updateLocation = () => {
@@ -356,71 +319,7 @@ export default class AcceptedPost extends Component {
         cancelable: false,
       },
     );
-    // Alert.alert(
-    //   `Hi ${displayName}`,
-    //   'Update your location so your seeker can locate you?',
-    //   [
-    //     {
-    //       text: 'OK',
-    //       onPress: async () => {
-    //         getLatLongAsync()
-    //           .then(async loc => {
-    //             const { longitude, latitude } = loc.coords;
-    //             updates[`/posts/${postId}/runner/lat`] = latitude;
-    //             updates[`/posts/${postId}/runner/long`] = longitude;
-    //             try {
-    //               await database.ref().update(updates);
-    //               sendNotification(runnerToken, 'Notice', 'Your runner updated location!');
-    //               Alert.alert('Success', 'You have succesfully updated your location!');
-    //             } catch (e) {
-    //               Alert.alert('Error', 'Please check your internet connection');
-    //             }
-    //           })
-    //           .catch(() => {
-    //             Alert.alert(
-    //               'Fetching location failed',
-    //               'Please turn on your location.',
-    //               [{ text: 'OK' }],
-    //               {
-    //                 cancelable: false,
-    //               },
-    //             );
-    //           });
-    //       },
-    //     },
-    //     { text: 'Cancel' },
-    //   ],
-    //   {
-    //     cancelable: false,
-    //   },
-    // );
   };
-
-  // updateLocation = () => {
-  //   const database = firebase.database();
-  //   const { post } = this.state;
-  //   const { postId, runner } = post;
-  //   const { runnerToken } = runner;
-  //   const updates = {};
-  //   getLatLongAsync()
-  //     .then(async loc => {
-  //       const { longitude, latitude } = loc.coords;
-  //       updates[`/posts/${postId}/seeker/lat`] = latitude;
-  //       updates[`/posts/${postId}/seeker/long`] = longitude;
-  //       try {
-  //         await database.ref().update(updates);
-  //         sendNotification(runnerToken, 'Notice', 'Your seeker updated location!');
-  //         Alert.alert('Success', 'You have succesfully updated your location!');
-  //       } catch (e) {
-  //         Alert.alert('Error', 'Please check your internet connection');
-  //       }
-  //     })
-  //     .catch(() => {
-  //       Alert.alert('Fetching location failed', 'Please turn on your location.', [{ text: 'OK' }], {
-  //         cancelable: false,
-  //       });
-  //     });
-  // };
 
   renderLogo = () => {
     const { post } = this.props;
@@ -471,8 +370,14 @@ export default class AcceptedPost extends Component {
 
   // AIzaSyBETIF-qVoLuMa22CGL2TFD1Y_IaySfGqg
 
+  // style={mapView}
+  // region={{
+  //   latitude: post.runner.lat,
+  //   longitude: post.runner.long,
+  //   latitudeDelta: 0.0922,
+  //   longitudeDelta: 0.0421,
   renderView() {
-    const { post, isSugoModalVisible, isMsgModalVisible } = this.state;
+    const { post, isSugoModalVisible, isMsgModalVisible, region } = this.state;
     const {
       img,
       imgContainer,
@@ -502,7 +407,7 @@ export default class AcceptedPost extends Component {
           title={post.metadata.title}
           desc={post.metadata.desc}
           isVisible={isSugoModalVisible}
-          hideModal={this.hideMsgModal}
+          hideModal={this.hideSugoModal}
         />
         <Chat
           post={post}
@@ -513,12 +418,8 @@ export default class AcceptedPost extends Component {
         <View style={mapViewContainer}>
           <MapView
             style={mapView}
-            region={{
-              latitude: post.runner.lat,
-              longitude: post.runner.long,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
+            initialRegion={region}
+            onRegionChange={region1 => this.setState({ region: region1 })}
           >
             <MapView.Marker coordinate={{ latitude: post.runner.lat, longitude: post.runner.long }}>
               <Image
@@ -533,7 +434,12 @@ export default class AcceptedPost extends Component {
               destination={{ latitude: post.seeker.lat, longitude: post.seeker.long }}
               apikey="AIzaSyBGa2ob4NtokBaBFS0y8SCXm-hZoJsVJmY"
               strokeWidth={3}
-              strokeColor={GLOBAL_STYLES.BRAND_COLOR}
+              strokeColor="red"
+              resetOnChange={false}
+              onReady={result => {
+                console.log(`Distance: ${result.distance} km`);
+                console.log(`Duration: ${result.duration} min.`);
+              }}
               onError={this.onError}
             />
           </MapView>

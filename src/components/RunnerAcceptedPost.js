@@ -37,13 +37,23 @@ export default class CurrentSugo extends Component {
       isMsgModalVisible: false,
       isProgressBarVisible: false,
       progressBarText: '',
+      region: '',
     };
   }
 
   componentWillReceiveProps(newProps) {
     const oldProps = this.props;
     if (oldProps.post !== newProps.post) {
-      this.setState({ post: newProps.post }, () => {
+      const { post } = newProps;
+      const { seeker } = post;
+      const { lat, long } = seeker;
+      const region = {
+        latitude: lat,
+        longitude: long,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
+      this.setState({ post, region }, () => {
         this.renderMomentAgo();
       });
     }
@@ -69,32 +79,17 @@ export default class CurrentSugo extends Component {
     this.setState({ isMsgModalVisible: false });
   };
 
-  // renderMomentAgo = () => {
-  //   const { post } = this.state;
-  //   const { metadata } = post;
-  //   const { timeStarted } = metadata;
-  //   const timeNow = new Date().getTime();
-  //   let initialSeconds = (timeNow - timeStarted) / 1000;
-  //   this.setState({ momentAgo: getMomentAgo(initialSeconds) });
-  //   if (post !== '') {
-  //     this.countdownInterval = setInterval(async () => {
-  //       initialSeconds += 65;
-  //       this.setState({ momentAgo: getMomentAgo(initialSeconds) });
-  //     }, 60000);
-  //   }
-  // };
-
   renderMomentAgo = () => {
     const { post } = this.props;
     const { metadata } = post;
-    const { timeStamp } = metadata;
+    const { timeStarted } = metadata;
     const initialTimeNow = new Date().getTime();
-    const initialSeconds = (initialTimeNow - timeStamp) / 1000;
+    const initialSeconds = (initialTimeNow - timeStarted) / 1000;
     this.setState({ momentAgo: getMomentAgo(initialSeconds) });
     if (post !== '') {
       this.countdownInterval = setInterval(async () => {
         const timeNow = new Date().getTime();
-        const seconds = (timeNow - timeStamp) / 1000;
+        const seconds = (timeNow - timeStarted) / 1000;
         this.setState({ momentAgo: getMomentAgo(seconds) });
       }, 60000);
     }
@@ -143,7 +138,13 @@ export default class CurrentSugo extends Component {
               isProgressBarVisible: false,
               progressBarText: '',
             });
-            Alert.alert('Error', message);
+            Alert.alert(
+              'Error',
+              'Sorry for having this issue, SugoPH team will look into this as soon as possible.',
+            );
+            database()
+              .ref('errors')
+              .push(message);
           }
         } else {
           Alert.alert('Connection Problem.', 'Please check your internet connection');
@@ -215,10 +216,9 @@ export default class CurrentSugo extends Component {
                         });
                         Alert.alert(
                           'Error',
-                          `${
-                            e.message
-                          } Sorry for having this issue, SugoPH team will look into this as soon as possible.`,
+                          'Sorry for having this issue, SugoPH team will look into this as soon as possible.',
                         );
+                        database.ref('errors').push(e.message);
                       }
                     }
                   }
@@ -227,30 +227,6 @@ export default class CurrentSugo extends Component {
                 }
               });
             }
-
-            // getLatLongAsync()
-            //   .then(async loc => {
-            //     const { longitude, latitude } = loc.coords;
-            //     updates[`/posts/${postId}/runner/lat`] = latitude;
-            //     updates[`/posts/${postId}/runner/long`] = longitude;
-            //     try {
-            //       await database.ref().update(updates);
-            //       sendNotification(seekerToken, 'Notice', 'Your runner updated location!');
-            //       Alert.alert('Success', 'You have succesfully updated your location!');
-            //     } catch (e) {
-            //       Alert.alert('Error', 'Please check your internet connection');
-            //     }
-            //   })
-            //   .catch(() => {
-            //     Alert.alert(
-            //       'Fetching location failed',
-            //       'Please turn on your location.',
-            //       [{ text: 'OK' }],
-            //       {
-            //         cancelable: false,
-            //       },
-            //     );
-            //   });
           },
         },
         { text: 'Cancel' },
@@ -349,7 +325,7 @@ export default class CurrentSugo extends Component {
   };
 
   renderView() {
-    const { post, isModalVisible, isMsgModalVisible } = this.state;
+    const { post, isModalVisible, isMsgModalVisible, region } = this.state;
     const {
       img,
       imgContainer,
@@ -389,12 +365,8 @@ export default class CurrentSugo extends Component {
         <View style={mapViewContainer}>
           <MapView
             style={mapView}
-            region={{
-              latitude: post.seeker.lat,
-              longitude: post.seeker.long,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
+            initialRegion={region}
+            onRegionChange={region1 => this.setState({ region: region1 })}
           >
             <MapView.Marker coordinate={{ latitude: post.seeker.lat, longitude: post.seeker.long }}>
               <Image
@@ -418,6 +390,11 @@ export default class CurrentSugo extends Component {
               apikey="AIzaSyBGa2ob4NtokBaBFS0y8SCXm-hZoJsVJmY"
               strokeWidth={3}
               strokeColor={GLOBAL_STYLES.BRAND_COLOR}
+              resetOnChange={false}
+              onReady={result => {
+                console.log(`Distance: ${result.distance} km`);
+                console.log(`Duration: ${result.duration} min.`);
+              }}
               onError={this.onError}
             />
           </MapView>

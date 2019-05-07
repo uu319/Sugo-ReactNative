@@ -19,36 +19,36 @@ export default class Categories extends Component {
         <View style={{ flex: 1 }}>
           <View style={{ flex: 1, flexDirection: 'row' }}>
             <Category
-              imageUri={require('../myassets/sugoGrocery.png')}
+              imageUri={require('../myassets/Grocery.png')}
               name="Grocery"
               onPress={() => onCatPress('Grocery')}
             />
             <Category
-              imageUri={require('../myassets/sugoDelivery.png')}
+              imageUri={require('../myassets/Pickup.png')}
               name="Pickup/ Delivery"
               onPress={() => onCatPress('Pickup / Delivery')}
             />
           </View>
           <View style={{ flex: 1, flexDirection: 'row' }}>
             <Category
-              imageUri={require('../myassets/sugoDocuments.png')}
+              imageUri={require('../myassets/Document.png')}
               name="Filing/Claiming of Documents"
               onPress={() => onCatPress('Filing/Claiming of Documents')}
             />
             <Category
-              imageUri={require('../myassets/sugoBillsPayment.png')}
+              imageUri={require('../myassets/Bills.png')}
               name="Bills Payment"
               onPress={() => onCatPress('Bills Payment')}
             />
           </View>
           <View style={{ flex: 1, flexDirection: 'row' }}>
             <Category
-              imageUri={require('../myassets/sugoHousehold.png')}
+              imageUri={require('../myassets/House.png')}
               name="Household Chores"
               onPress={() => onCatPress('Household Chores')}
             />
             <Category
-              imageUri={require('../myassets/sugoOthers.png')}
+              imageUri={require('../myassets/Others.png')}
               name="Others"
               onPress={() => onCatPress('Others')}
             />

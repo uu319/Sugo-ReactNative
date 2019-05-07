@@ -33,6 +33,13 @@ export default class App extends React.Component {
       require('./src/myassets/sugoOthers.png'),
       require('./src/myassets/sugoHousehold.png'),
       require('./src/myassets/sugoLogoOrange.png'),
+
+      require('./src/myassets/Bills.png'),
+      require('./src/myassets/Document.png'),
+      require('./src/myassets/Grocery.png'),
+      require('./src/myassets/House.png'),
+      require('./src/myassets/Others.png'),
+      require('./src/myassets/Pickup.png'),
     ]);
 
     // const iosSearch = Font.loadAsync([Ionicons['ios-search']]);

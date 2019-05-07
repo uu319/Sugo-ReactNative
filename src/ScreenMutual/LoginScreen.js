@@ -85,6 +85,14 @@ class Login extends Component {
     } catch ({ message }) {
       this.setState({ loading: false });
       Alert.alert('Error', 'Something went wrong, please try again');
+      Alert.alert(
+        'Error',
+        'Please try again. Sorry for having this issue, SugoPH team will look into this as soon as possible.',
+      );
+      firebase
+        .database()
+        .ref('errors')
+        .push(message);
     }
   };
 
@@ -120,6 +128,10 @@ class Login extends Component {
     } catch (e) {
       Alert.alert('Error', 'Something went wrong, please try again');
       this.setState({ loading: false });
+      firebase
+        .database()
+        .ref('errors')
+        .push(e.message);
     }
   };
 
@@ -129,9 +141,13 @@ class Login extends Component {
     try {
       await AsyncStorage.setItem('user', JSON.stringify(user));
       navigate('TypeLoading');
-    } catch (error) {
+    } catch (e) {
       this.setState({ loading: false });
       Alert.alert('error on storeUserToFirebase');
+      firebase
+        .database()
+        .ref('errors')
+        .push(e.message);
     }
   };
 

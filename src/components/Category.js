@@ -11,14 +11,10 @@ export default class Category extends Component {
         onPress={onPress}
         style={{
           flex: 1,
-          marginHorizontal: 6,
-          marginVertical: 10,
+          marginHorizontal: 16,
+          marginVertical: 15,
           borderWidth: 0.3,
           borderColor: '#ddd',
-          // borderColor: 'black',
-          // shadowColor: 'gray',
-          // shadowOffset: { width: 3, height: 3 },
-          // shadowOpacity: 0.5,
           borderRadius: 10,
           overflow: 'hidden',
         }}
@@ -44,8 +40,8 @@ export default class Category extends Component {
             backgroundColor: 'white',
           }}
         >
-          <Text>{name}</Text>
-          <Text>₱300.00</Text>
+          <Text adjustsFontSizeToFit>{name}</Text>
+          <Text adjustsFontSizeToFit>₱300.00</Text>
         </View>
       </TouchableOpacity>
     );

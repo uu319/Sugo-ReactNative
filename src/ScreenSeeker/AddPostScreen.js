@@ -10,8 +10,8 @@ import {
   NetInfo,
   Platform,
   Image,
+  TextInput,
 } from 'react-native';
-import t from 'tcomb-form-native';
 import { Location, Permissions, IntentLauncherAndroid } from 'expo';
 import * as firebase from 'firebase';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,98 +20,15 @@ import { MONTHARRAY, GLOBAL_STYLES, renderSugoLogo } from '../components/Constan
 import { Spinner } from '../components/common/Spinner';
 
 const { width } = Dimensions.get('window');
-const { Form } = t.form;
-// const Price = t.refinement(t.Number, n => {
-//   return n >= 100;
-// });
-const Post = t.struct({
-  // Price,
-  Description: t.String,
-});
 
 export default class MyModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      options: {},
-      value: {
-        Description: '',
-        // Price: '',
-      },
+      desc: '',
       loading: false,
     };
   }
-
-  componentDidMount() {
-    this.initializeForm();
-  }
-
-  initializeForm = () => {
-    const { loading } = this.state;
-    const editable = !loading;
-    console.log('editable', editable);
-    const formStyles = {
-      ...Form.stylesheet,
-      formGroup: {
-        normal: {
-          marginBottom: 10,
-        },
-      },
-      controlLabel: {
-        normal: {
-          color: 'gray',
-          fontSize: 14,
-          marginBottom: 7,
-          fontWeight: '300',
-        },
-        // the style applied when a validation error occours
-        error: {
-          color: GLOBAL_STYLES.BRAND_COLOR,
-          fontSize: 18,
-          marginBottom: 7,
-          fontWeight: '600',
-        },
-      },
-    };
-
-    const options = {
-      fields: {
-        Description: {
-          editable,
-          multiline: true,
-          stylesheet: {
-            ...formStyles,
-            error: {
-              color: 'red',
-              fontSize: 18,
-              marginBottom: 7,
-              fontWeight: '600',
-            },
-            textbox: {
-              ...Form.stylesheet.textbox,
-              normal: {
-                ...Form.stylesheet.textbox.normal,
-                height: 130,
-                textAlignVertical: 'top',
-                padding: 10,
-                backgroundColor: 'white',
-              },
-            },
-          },
-          numberOfLines: 5,
-          textAlignVertical: 'top',
-          error: 'Please describe your sugo.',
-        },
-      },
-      stylesheet: formStyles,
-    };
-    this.setState({ options });
-  };
-
-  handleSubmit = () => {
-    const value = this._form.getValue();
-    console.log('value: ', value);
-  };
 
   storePostToLocalStorage = async postId => {
     try {
@@ -123,8 +40,7 @@ export default class MyModal extends Component {
   };
 
   insertPost = () => {
-    const value = this._form.getValue();
-    const desc = value.Description;
+    const { desc } = this.state;
     this.setState({ loading: true });
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
@@ -209,10 +125,12 @@ export default class MyModal extends Component {
               } else {
                 Alert.alert(
                   'Error',
-                  `${
-                    e.message
-                  } Please try again. Sorry for having this issue, SugoPH team will look into this as soon as possible.`,
+                  'Please try again. Sorry for having this issue, SugoPH team will look into this as soon as possible.',
                 );
+                firebase
+                  .database()
+                  .ref('errors')
+                  .push(e.message);
               }
             }
           } else {
@@ -228,13 +146,10 @@ export default class MyModal extends Component {
   };
 
   renderButton() {
-    const { loading, value } = this.state;
-    const price = value.Price;
-    const desc = value.Description;
-    console.log('pricedesc', `${price}${desc}`);
+    const { loading, desc } = this.state;
     const { btnSubmitStyle } = styles;
     let disabled = true;
-    if (!(price === '' || desc === '')) {
+    if (!(desc === '')) {
       disabled = false;
     }
 
@@ -254,7 +169,7 @@ export default class MyModal extends Component {
   }
 
   render() {
-    const { value, options } = this.state;
+    const { desc } = this.state;
     const { container, headerContainerStyle, catNameStyle } = styles;
     const { navigation } = this.props;
     const params = navigation.getParam('params', 'none');
@@ -286,14 +201,21 @@ export default class MyModal extends Component {
               {catName}
             </Text>
           </View>
-          <Form
-            ref={c => {
-              this._form = c;
+          <TextInput
+            style={{
+              height: 130,
+              borderColor: 'gray',
+              borderWidth: 0.5,
+              margin: 5,
+              padding: 7,
+              borderRadius: 5,
+              color: 'gray',
             }}
-            type={Post}
-            options={options}
-            value={value}
-            onChange={val => this.setState({ value: val })}
+            onChangeText={description => this.setState({ desc: description })}
+            value={desc}
+            textAlignVertical="top"
+            multiline
+            numberOfLines={8}
           />
           <View
             style={{ marginTop: 10, height: 40, justifyContent: 'center', alignItems: 'center' }}
