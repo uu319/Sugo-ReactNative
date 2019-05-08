@@ -1,22 +1,25 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import * as firebase from 'firebase';
-import { GLOBAL_STYLES, renderSugoLogo } from './Constants';
+import { GLOBAL_STYLES, renderSugoLogo, getMomentAgo } from './Constants';
 
 export default class PendingPost extends Component {
   constructor(props) {
     super(props);
     this.state = {
       post: '',
+      momentAgo: 0,
     };
   }
 
   componentWillReceiveProps(newProps) {
     const oldProps = this.props;
     if (oldProps.post !== newProps.post) {
-      this.setState({ post: newProps.post });
+      this.setState({ post: newProps.post }, () => {
+        this.renderMomentAgo();
+      });
     }
   }
 
@@ -26,6 +29,22 @@ export default class PendingPost extends Component {
     database.ref(`posts/${postId}`).once('value', snapshot => {
       this.setState({ post: snapshot.val() });
     });
+  };
+
+  renderMomentAgo = () => {
+    const { post } = this.state;
+    const { metadata } = post;
+    const { timeStamp } = metadata;
+    const initialTimeNow = new Date().getTime();
+    const initialSeconds = (initialTimeNow - timeStamp) / 1000;
+    this.setState({ momentAgo: getMomentAgo(initialSeconds) });
+    if (post !== '') {
+      this.countdownInterval = setInterval(async () => {
+        const timeNow = new Date().getTime();
+        const seconds = (timeNow - timeStamp) / 1000;
+        this.setState({ momentAgo: getMomentAgo(seconds) });
+      }, 60000);
+    }
   };
 
   onCancelSugo = async () => {
@@ -66,22 +85,28 @@ export default class PendingPost extends Component {
     const { btnCancelStyle } = styles;
     return post ? (
       <TouchableOpacity onPress={this.onCancelSugo} style={btnCancelStyle}>
-        <Text style={{ color: 'white', fontSize: 20 }}>Cancel</Text>
+        <Text style={{ color: 'gray' }}>Cancel</Text>
       </TouchableOpacity>
     ) : null;
   };
 
+  // <ScrollView style={scrollViewStyle}>
+  //   <Text style={{ fontStyle: 'italic', color: 'gray' }}>
+  //     {post !== '' ? post.metadata.desc : ''}
+  //   </Text>
+  // </ScrollView>
+
   render() {
-    const { post } = this.state;
+    const { post, momentAgo } = this.state;
     const {
       headerContainer,
       headerImageStyle,
       headerImageContainer,
-      scrollViewStyle,
       sugoLogoStyle,
       titleContainerStyle,
       upperContainerStyle,
       lowerContainerStyle,
+      upperRowContainerStyle,
     } = styles;
     return (
       <View style={{ flex: 1 }}>
@@ -92,16 +117,28 @@ export default class PendingPost extends Component {
         </View>
         <View style={upperContainerStyle}>
           {post !== '' ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+            <View style={upperRowContainerStyle}>
               <View style={titleContainerStyle}>
                 <Image source={renderSugoLogo(post.metadata.title)} style={sugoLogoStyle} />
-                <Text>{post !== '' ? post.metadata.title : ''}</Text>
               </View>
-              <ScrollView style={scrollViewStyle}>
-                <Text style={{ fontStyle: 'italic', color: 'gray' }}>
-                  {post !== '' ? post.metadata.desc : ''}
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  color: '#4F4F4F;',
+                }}
+              >
+                <Text adjustsFontSizeToFit numberOfLines={1} style={{ color: 'gray' }}>
+                  {post !== '' ? post.metadata.title : ''}
                 </Text>
-              </ScrollView>
+                <Text style={{ fontSize: 36, fontWeight: '500', color: 'gray' }}>{`₱${
+                  post.metadata.price
+                }.00`}</Text>
+                <Text
+                  style={{ fontSize: 16, color: GLOBAL_STYLES.BRAND_COLOR }}
+                >{`${momentAgo} ago`}</Text>
+              </View>
             </View>
           ) : null}
         </View>
@@ -128,14 +165,11 @@ export default class PendingPost extends Component {
 
 const styles = StyleSheet.create({
   btnCancelStyle: {
-    backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
     height: 40,
     width: '35%',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 4,
     alignSelf: 'center',
-    elevation: 1.3,
   },
   headerContainer: {
     height: 70,
@@ -152,27 +186,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sugoLogoStyle: {
-    height: 20,
-    width: 20,
-    borderRadius: 5,
-    marginRight: 5,
+    resizeMode: 'contain',
+    flex: 1,
   },
   upperContainerStyle: {
-    height: '30%',
-    width: '100%',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  upperRowContainerStyle: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 40,
+    padding: 10,
+    elevation: 1,
+    borderColor: '#dddddd',
+    borderRadius: 8,
+  },
+  titleContainerStyle: {
+    alignItems: 'center',
+    backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
+    height: 60,
+    width: 60,
+    borderRadius: 7,
+    overflow: 'hidden',
   },
   lowerContainerStyle: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
-  titleContainerStyle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
+
   scrollViewStyle: {
     flex: 1,
   },

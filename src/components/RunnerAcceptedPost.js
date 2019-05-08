@@ -38,6 +38,7 @@ export default class CurrentSugo extends Component {
       isProgressBarVisible: false,
       progressBarText: '',
       region: '',
+      distance: '',
     };
   }
 
@@ -83,27 +84,31 @@ export default class CurrentSugo extends Component {
     const { post } = this.props;
     const { metadata } = post;
     const { timeStarted } = metadata;
-    const initialTimeNow = new Date().getTime();
-    const initialSeconds = (initialTimeNow - timeStarted) / 1000;
-    this.setState({ momentAgo: getMomentAgo(initialSeconds) });
-    if (post !== '') {
-      this.countdownInterval = setInterval(async () => {
-        const timeNow = new Date().getTime();
-        const seconds = (timeNow - timeStarted) / 1000;
-        this.setState({ momentAgo: getMomentAgo(seconds) });
-      }, 60000);
+    if (post.metadata.timeStarted !== '') {
+      const initialTimeNow = new Date().getTime();
+      const initialSeconds = (initialTimeNow - timeStarted) / 1000;
+      this.setState({ momentAgo: getMomentAgo(initialSeconds) });
+      if (post !== '') {
+        this.countdownInterval = setInterval(async () => {
+          const timeNow = new Date().getTime();
+          const seconds = (timeNow - timeStarted) / 1000;
+          this.setState({ momentAgo: getMomentAgo(seconds) });
+        }, 60000);
+      }
     }
   };
 
   onUpdateSugoStatus = async update => {
+    const database = firebase.database();
+
     const { post } = this.state;
-    const { postId, runner, seeker } = post;
+    const { postId, runner, seeker, metadata } = post;
     const { seekerId, seekerToken } = seeker;
     const { runnerId } = runner;
     const notifTitle = 'Hoooray!';
     let notifBody = '';
     let progressBarText = '';
-    const database = firebase.database();
+
     const updates = {};
     updates[`/posts/${postId}/metadata/status`] = update;
     updates[`/users/${seekerId}/currentPostStatus`] = update;
@@ -126,26 +131,30 @@ export default class CurrentSugo extends Component {
             isProgressBarVisible: true,
             progressBarText,
           });
-          try {
-            await database.ref().update(updates);
-            sendNotification(seekerToken, notifTitle, notifBody);
-            this.setState({
-              isProgressBarVisible: false,
-              progressBarText: '',
-            });
-          } catch ({ message }) {
-            this.setState({
-              isProgressBarVisible: false,
-              progressBarText: '',
-            });
-            Alert.alert(
-              'Error',
-              'Sorry for having this issue, SugoPH team will look into this as soon as possible.',
-            );
-            database()
-              .ref('errors')
-              .push(message);
-          }
+          database.ref(`posts/${postId}/metadata/status`).once('value', async val => {
+            if (val.val() !== 'cancelled') {
+              try {
+                await database.ref().update(updates);
+                sendNotification(seekerToken, notifTitle, notifBody);
+                this.setState({
+                  isProgressBarVisible: false,
+                  progressBarText: '',
+                });
+              } catch ({ message }) {
+                this.setState({
+                  isProgressBarVisible: false,
+                  progressBarText: '',
+                });
+                Alert.alert(
+                  'Error',
+                  'Sorry for having this issue, SugoPH team will look into this as soon as possible.',
+                );
+                database()
+                  .ref('errors')
+                  .push(message);
+              }
+            }
+          });
         } else {
           Alert.alert('Connection Problem.', 'Please check your internet connection');
         }
@@ -325,7 +334,7 @@ export default class CurrentSugo extends Component {
   };
 
   renderView() {
-    const { post, isModalVisible, isMsgModalVisible, region } = this.state;
+    const { post, isModalVisible, isMsgModalVisible, region, distance } = this.state;
     const {
       img,
       imgContainer,
@@ -345,6 +354,7 @@ export default class CurrentSugo extends Component {
       btnToggleContainer,
       seekerTextStyle,
       updateLocationButtonStyle,
+      distanceContainer,
     } = styles;
 
     return !(post === '') ? (
@@ -369,12 +379,19 @@ export default class CurrentSugo extends Component {
             onRegionChange={region1 => this.setState({ region: region1 })}
           >
             <MapView.Marker coordinate={{ latitude: post.seeker.lat, longitude: post.seeker.long }}>
-              <Image
-                source={{
-                  uri: post.seeker.photoURL || LOGO_URL,
-                }}
-                style={styles.circle}
-              />
+              <View style={{ alignItems: 'center' }}>
+                <View style={distanceContainer}>
+                  <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+                    {`${Math.round(distance)} km away`}
+                  </Text>
+                </View>
+                <Image
+                  source={{
+                    uri: post.seeker.photoURL || LOGO_URL,
+                  }}
+                  style={styles.circle}
+                />
+              </View>
             </MapView.Marker>
             <MapView.Marker coordinate={{ latitude: post.runner.lat, longitude: post.runner.long }}>
               <Image
@@ -392,8 +409,7 @@ export default class CurrentSugo extends Component {
               strokeColor={GLOBAL_STYLES.BRAND_COLOR}
               resetOnChange={false}
               onReady={result => {
-                console.log(`Distance: ${result.distance} km`);
-                console.log(`Duration: ${result.duration} min.`);
+                this.setState({ distance: result.distance });
               }}
               onError={this.onError}
             />
@@ -401,7 +417,10 @@ export default class CurrentSugo extends Component {
           <View>
             <View style={floatingButtonRowContainer}>
               <TouchableOpacity onPress={this.showModal} style={viewDetailsButtonStyle}>
-                <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+                <Text
+                  adjustsFontSizeToFit
+                  style={{ fontWeight: '500', color: GLOBAL_STYLES.BRAND_COLOR }}
+                >
                   View Details
                 </Text>
               </TouchableOpacity>
@@ -561,11 +580,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  distanceContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
+    borderRadius: 5,
+    padding: 5,
+  },
   circle: {
     width: 30,
     height: 30,
     borderRadius: 30 / 2,
-    backgroundColor: 'red',
+    borderColor: GLOBAL_STYLES.BRAND_COLOR,
+    borderWidth: 1,
   },
   pinText: {
     color: 'white',
@@ -596,11 +623,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 6,
-    backgroundColor: '#29AB87',
     marginBottom: 20,
     marginLeft: 30,
-    width: '30%',
+    backgroundColor: 'white',
     height: 30,
+    paddingHorizontal: 7,
+    elevation: 1,
   },
   updateLocationButtonStyle: {
     alignItems: 'center',
@@ -611,6 +639,7 @@ const styles = StyleSheet.create({
     marginRight: 20,
     width: 60,
     height: 60,
+    elevation: 1,
   },
   btnToggleContainer: {
     flex: 1.5,

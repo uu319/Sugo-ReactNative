@@ -163,12 +163,12 @@ export default class Chat extends Component {
           style={{
             width: '60%',
             alignSelf: item.from === userId ? 'flex-end' : 'flex-start',
-            backgroundColor: item.from === userId ? '#00897b' : '#7cb342',
+            backgroundColor: item.from === userId ? GLOBAL_STYLES.BRAND_COLOR : 'gray',
             borderRadius: 5,
             padding: 10,
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 16 }}>{item.message}</Text>
+          <Text style={{ color: 'white' }}>{item.message}</Text>
         </View>
         <Text
           style={{
@@ -225,8 +225,7 @@ export default class Chat extends Component {
           alignItems: 'center',
         }}
       >
-        <Image source={require('../myassets/message.png')} style={{ width: 100, height: 100 }} />
-        <Text style={{ fontSize: 30, color: '#dddddd' }}>Say Hi To Your {typeText}</Text>
+        <Text style={{ fontSize: 20, color: '#dddddd' }}>Say Hi To Your {typeText}</Text>
       </View>
     ) : (
       <FlatList
@@ -277,8 +276,10 @@ export default class Chat extends Component {
                 hideModal();
               }}
             >
-              <Ionicons name="ios-arrow-back" size={40} color="black" />
-              <Text style={{ fontSize: 30, fontWeight: '600', marginLeft: 20 }}>Chats</Text>
+              <Ionicons name="ios-arrow-back" size={40} color="#BDBDBD" />
+              <Text style={{ fontSize: 30, fontWeight: '600', marginLeft: 20, color: '#BDBDBD' }}>
+                Chats
+              </Text>
             </TouchableOpacity>
           </View>
           {this.renderFlatList()}
@@ -341,14 +342,17 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: 'white',
     borderRadius: 30,
+    borderColor: 'gray',
+    borderWidth: 0.5,
   },
   inputStyle: {
-    padding: 10,
     borderWidth: 1,
     borderColor: '#ccc',
     flex: 4,
     borderRadius: 5,
     marginBottom: 10,
+    paddingHorizontal: 5,
+    color: 'gray',
   },
   sendButtonStyle: {
     flex: 1,
@@ -364,9 +368,11 @@ const styles = StyleSheet.create({
     height: 75,
     width: '100%',
     flexDirection: 'row',
+    alignItems: 'flex-start',
     justifyContent: 'flex-start',
     padding: 20,
     backgroundColor: 'white',
+    elevation: 1,
   },
   progressbarContainer: {
     height: 50,

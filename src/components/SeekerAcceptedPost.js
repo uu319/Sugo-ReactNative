@@ -32,6 +32,7 @@ export default class AcceptedPost extends Component {
       isProgressBarVisible: false,
       progressBarText: '',
       region: '',
+      distance: '',
     };
   }
 
@@ -61,15 +62,17 @@ export default class AcceptedPost extends Component {
     const { post } = this.props;
     const { metadata } = post;
     const { timeStarted } = metadata;
-    const initialTimeNow = new Date().getTime();
-    const initialSeconds = (initialTimeNow - timeStarted) / 1000;
-    this.setState({ momentAgo: getMomentAgo(initialSeconds) });
-    if (post !== '') {
-      this.countdownInterval = setInterval(async () => {
-        const timeNow = new Date().getTime();
-        const seconds = (timeNow - timeStarted) / 1000;
-        this.setState({ momentAgo: getMomentAgo(seconds) });
-      }, 60000);
+    if (post.metadata.timeStarted !== '') {
+      const initialTimeNow = new Date().getTime();
+      const initialSeconds = (initialTimeNow - timeStarted) / 1000;
+      this.setState({ momentAgo: getMomentAgo(initialSeconds) });
+      if (post !== '') {
+        this.countdownInterval = setInterval(async () => {
+          const timeNow = new Date().getTime();
+          const seconds = (timeNow - timeStarted) / 1000;
+          this.setState({ momentAgo: getMomentAgo(seconds) });
+        }, 60000);
+      }
     }
   };
 
@@ -377,7 +380,7 @@ export default class AcceptedPost extends Component {
   //   latitudeDelta: 0.0922,
   //   longitudeDelta: 0.0421,
   renderView() {
-    const { post, isSugoModalVisible, isMsgModalVisible, region } = this.state;
+    const { post, isSugoModalVisible, isMsgModalVisible, region, distance } = this.state;
     const {
       img,
       imgContainer,
@@ -399,6 +402,7 @@ export default class AcceptedPost extends Component {
       twinButtonRowContainer,
       btnConfirmContainer,
       updateLocationButtonStyle,
+      distanceContainer,
     } = styles;
 
     return !(post === '') ? (
@@ -422,23 +426,29 @@ export default class AcceptedPost extends Component {
             onRegionChange={region1 => this.setState({ region: region1 })}
           >
             <MapView.Marker coordinate={{ latitude: post.runner.lat, longitude: post.runner.long }}>
-              <Image
-                source={{
-                  uri: post.runner.photoURL || LOGO_URL,
-                }}
-                style={styles.circle}
-              />
+              <View style={{ alignItems: 'center' }}>
+                <View style={distanceContainer}>
+                  <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+                    {`${Math.round(distance)} km away`}
+                  </Text>
+                </View>
+                <Image
+                  source={{
+                    uri: post.runner.photoURL || LOGO_URL,
+                  }}
+                  style={styles.circle}
+                />
+              </View>
             </MapView.Marker>
             <MapViewDirections
               origin={{ latitude: post.runner.lat, longitude: post.runner.long }}
               destination={{ latitude: post.seeker.lat, longitude: post.seeker.long }}
               apikey="AIzaSyBGa2ob4NtokBaBFS0y8SCXm-hZoJsVJmY"
               strokeWidth={3}
-              strokeColor="red"
+              strokeColor={GLOBAL_STYLES.BRAND_COLOR}
               resetOnChange={false}
               onReady={result => {
-                console.log(`Distance: ${result.distance} km`);
-                console.log(`Duration: ${result.duration} min.`);
+                this.setState({ distance: result.distance });
               }}
               onError={this.onError}
             />
@@ -450,7 +460,7 @@ export default class AcceptedPost extends Component {
                   onPress={this.onCancelSugo}
                   style={[twinButtonStyle, { backgroundColor: '#EB5757' }]}
                 >
-                  <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+                  <Text adjustsFontSizeToFit style={{ fontWeight: '500', color: 'white' }}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
@@ -460,7 +470,7 @@ export default class AcceptedPost extends Component {
                   onPress={this.showSugoModal}
                   style={[twinButtonStyle, { backgroundColor: '#29AB87' }]}
                 >
-                  <Text adjustsFontSizeToFit style={{ color: 'white' }}>
+                  <Text adjustsFontSizeToFit style={{ fontWeight: '500', color: 'white' }}>
                     View Details
                   </Text>
                 </TouchableOpacity>
@@ -623,11 +633,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  distanceContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: GLOBAL_STYLES.BRAND_COLOR,
+    borderRadius: 5,
+    padding: 5,
+  },
   circle: {
     width: 30,
     height: 30,
     borderRadius: 30 / 2,
-    backgroundColor: 'red',
+    borderColor: GLOBAL_STYLES.BRAND_COLOR,
+    borderWidth: 1,
   },
   pinText: {
     color: 'white',
@@ -658,6 +676,7 @@ const styles = StyleSheet.create({
     marginRight: 7,
     width: 60,
     height: 60,
+    elevation: 1,
   },
   twinButtonStyle: {
     alignItems: 'center',
@@ -665,6 +684,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     width: '100%',
     height: 30,
+    elevation: 1,
   },
   btnConfirmContainer: {
     flex: 1.5,

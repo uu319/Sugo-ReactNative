@@ -107,7 +107,10 @@ export default class RunnerSugoScreen extends Component {
               justifyContent: 'center',
             }}
           >
-            <Image source={require('../myassets/bike.png')} style={{ height: 100, width: 100 }} />
+            <Image
+              source={require('../myassets/EmptyIcon.png')}
+              style={{ height: 100, width: 100 }}
+            />
             <Text style={{ fontSize: 30, color: '#dddddd' }}>Empty</Text>
           </View>
         )}

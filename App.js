@@ -33,6 +33,7 @@ export default class App extends React.Component {
       require('./src/myassets/sugoOthers.png'),
       require('./src/myassets/sugoHousehold.png'),
       require('./src/myassets/sugoLogoOrange.png'),
+      require('./src/myassets/EmptyIcon.png'),
 
       require('./src/myassets/Bills.png'),
       require('./src/myassets/Document.png'),
