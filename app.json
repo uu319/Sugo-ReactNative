@@ -33,7 +33,7 @@
       }
     },
     "android": {
-      "versionCode": 3,
+      "versionCode": 4,
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {

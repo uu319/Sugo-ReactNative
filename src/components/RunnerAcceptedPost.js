@@ -32,7 +32,7 @@ export default class CurrentSugo extends Component {
     super(props);
     this.state = {
       post: '',
-      isModalVisible: false,
+      isSugoDetailsModalVisible: false,
       momentAgo: '',
       isMsgModalVisible: false,
       isProgressBarVisible: false,
@@ -65,11 +65,11 @@ export default class CurrentSugo extends Component {
   }
 
   showModal = () => {
-    this.setState({ isModalVisible: true });
+    this.setState({ isSugoDetailsModalVisible: true });
   };
 
   hideModal = () => {
-    this.setState({ isModalVisible: false });
+    this.setState({ isSugoDetailsModalVisible: false });
   };
 
   showMsgModal = () => {
@@ -102,7 +102,7 @@ export default class CurrentSugo extends Component {
     const database = firebase.database();
 
     const { post } = this.state;
-    const { postId, runner, seeker, metadata } = post;
+    const { postId, runner, seeker } = post;
     const { seekerId, seekerToken } = seeker;
     const { runnerId } = runner;
     const notifTitle = 'Hoooray!';
@@ -334,7 +334,7 @@ export default class CurrentSugo extends Component {
   };
 
   renderView() {
-    const { post, isModalVisible, isMsgModalVisible, region, distance } = this.state;
+    const { post, isSugoDetailsModalVisible, isMsgModalVisible, region, distance } = this.state;
     const {
       img,
       imgContainer,
@@ -362,9 +362,9 @@ export default class CurrentSugo extends Component {
         <MyModal
           title={post.metadata.title}
           desc={post.metadata.desc}
-          isVisible={isModalVisible}
+          isVisible={isSugoDetailsModalVisible}
           hideModal={this.hideModal}
-          onBackButtonPress={() => this.setState({ isModalVisible: false })}
+          onBackButtonPress={() => this.setState({ isSugoDetailsModalVisible: false })}
         />
         <Chat
           post={post}

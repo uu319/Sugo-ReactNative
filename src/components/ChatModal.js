@@ -341,9 +341,9 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 10,
     backgroundColor: 'white',
-    borderRadius: 30,
-    borderColor: 'gray',
-    borderWidth: 0.5,
+    // borderRadius: 30,
+    // borderColor: 'gray',
+    // borderWidth: 0.5,
   },
   inputStyle: {
     borderWidth: 1,

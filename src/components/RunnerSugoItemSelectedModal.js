@@ -26,7 +26,7 @@ export default class SelectedSugo extends Component {
       nameContainerStyle,
       imgStyle,
       nameTextStyle,
-      sugoTextStyle,
+      addressTextStyle,
       detailsTextStyle,
       priceContainerStyle,
       btnContainerStyle,
@@ -37,7 +37,7 @@ export default class SelectedSugo extends Component {
     const { post, hideModal, isVisible, onAcceptSugo, isProgressBarVisible } = this.props;
     const { metadata, seeker } = post;
     const { displayName, photoURL } = seeker;
-    const { title, desc, price } = metadata;
+    const { title, desc, price, address } = metadata;
     return (
       <Modal animationOut="slideOutLeft" isVisible={isVisible} style={{ margin: 0 }}>
         <SafeAreaView style={container}>
@@ -54,12 +54,7 @@ export default class SelectedSugo extends Component {
                 <View
                   style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
                 >
-                  <Image
-                    resizeMode="contain"
-                    source={renderSugoLogo(title)}
-                    style={{ height: 16, width: 16 }}
-                  />
-                  <Text style={sugoTextStyle}>{title}</Text>
+                  <Text style={addressTextStyle}>{address}</Text>
                 </View>
               </View>
             </View>
@@ -82,17 +77,22 @@ export default class SelectedSugo extends Component {
 
           <View style={footerContainerStyle}>
             <View style={priceContainerStyle}>
-              <Text style={priceTextStyle}>₱ {price}.00</Text>
               <View
                 style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start' }}
               >
                 <Image
                   resizeMode="contain"
                   source={renderSugoLogo(title)}
-                  style={{ height: 16, width: 16, borderRadius: 1 }}
+                  style={{
+                    height: 16,
+                    width: 16,
+                    borderRadius: 4,
+                    marginRight: 6,
+                  }}
                 />
-                <Text style={sugoTextStyle}>{title}</Text>
+                <Text style={addressTextStyle}>{title}</Text>
               </View>
+              <Text style={priceTextStyle}>₱ {price}.00</Text>
             </View>
             <View style={btnContainerStyle}>
               <TouchableOpacity onPress={() => onAcceptSugo(post)} style={btnAcceptStyle}>
@@ -134,8 +134,8 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     padding: 13,
-    elevation: 2,
-    backgroundColor: '#dddddd',
+    borderColor: '#dddddd',
+    borderTopWidth: 3,
   },
   imageContainerStyle: {
     height: 110,
@@ -156,8 +156,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     fontWeight: '300',
   },
-  sugoTextStyle: {
-    fontSize: 18,
+  addressTextStyle: {
+    fontSize: 15,
+    fontStyle: 'italic',
     fontWeight: '300',
     color: '#828282',
   },
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     color: '#6E798A',
   },
   priceContainerStyle: {
-    flex: 1.6,
+    flex: 1.8,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },

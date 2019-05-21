@@ -1,5 +1,6 @@
 import React from 'react';
 import { AsyncStorage, StatusBar, View, Image } from 'react-native';
+import { GoogleSignIn } from 'expo';
 
 export default class AuthLoadingScreen extends React.Component {
   constructor(props) {
@@ -11,10 +12,12 @@ export default class AuthLoadingScreen extends React.Component {
   _bootstrapAsync = async () => {
     const { navigation } = this.props;
     const { navigate } = navigation;
-    const userToken = await AsyncStorage.getItem('user');
+    const checkIfSignedIn = await GoogleSignIn.isSignedInAsync();
+    console.log('this is signed in', checkIfSignedIn);
+    // const userToken = await AsyncStorage.getItem('user');
     // This will switch to the App screen or Auth screen and this loading
     // screen will be unmounted and thrown away.
-    navigate(userToken ? 'App' : 'Auth');
+    navigate(checkIfSignedIn ? 'App' : 'Auth');
   };
 
   // Render any loading content that you like here

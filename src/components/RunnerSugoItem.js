@@ -188,21 +188,29 @@ export default class SugoItem extends Component {
         />
         <View style={infoContainer}>
           <Text style={priceTextStyle}>{`₱${post.metadata.price}.00`}</Text>
-          <View style={innerRowContainer}>
-            <Ionicons name="ios-person" size={18} color="gray" />
-            <Text style={nameTextStyle}>{post.seeker.displayName}</Text>
-          </View>
-          <View style={innerRowContainer}>
-            <Ionicons name="md-locate" size={18} color="gray" />
-            <Text style={addressTextStyle}>{post.metadata.address}</Text>
+          <View>
+            <View style={innerRowContainer}>
+              <Ionicons name="ios-person" size={18} color="gray" />
+              <Text adjustsFontSizeToFit numberOfLines={1} style={nameTextStyle}>
+                {post.seeker.displayName}
+              </Text>
+            </View>
+            <View style={innerRowContainer}>
+              <Ionicons name="md-locate" size={18} color="gray" />
+              <Text adjustsFontSizeToFit numberOfLines={1} style={addressTextStyle}>
+                {post.metadata.address}
+              </Text>
+            </View>
           </View>
         </View>
         <View style={innerRightContainer}>
           <View style={momentAgoContainer}>
             <Text style={momentAgoTextStyle}>{momentAgo} ago</Text>
           </View>
-          <View style={imageContainerStyle}>
-            <Image resizeMode="contain" source={uri} style={imgStyle} />
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={imageContainerStyle}>
+              <Image resizeMode="contain" source={uri} style={imgStyle} />
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -212,32 +220,34 @@ export default class SugoItem extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    height: 110,
+    height: 120,
     width: '95%',
     borderRadius: 10,
     alignSelf: 'center',
     overflow: 'hidden',
     flexDirection: 'row',
     margin: 5,
-    elevation: 2,
+    elevation: 1,
   },
   infoContainer: {
     flex: 2,
     padding: 13,
-    justifyContent: 'center',
+    justifyContent: 'space-around',
   },
   priceTextStyle: {
     color: '#7F838F',
-    fontSize: 24,
-    fontWeight: '500',
+    fontSize: 33,
+    fontWeight: '300',
   },
   nameTextStyle: {
     color: '#585966',
     fontSize: 16,
+    marginLeft: 5,
   },
   addressTextStyle: {
     color: '#585966',
     fontSize: 16,
+    marginLeft: 3,
   },
   innerRowContainer: {
     flexDirection: 'row',
@@ -246,11 +256,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   momentAgoContainer: {
-    height: 14,
     width: '100%',
     alignItems: 'flex-end',
     justifyContent: 'center',
     paddingRight: 10,
+    paddingTop: 10,
   },
   momentAgoTextStyle: {
     color: '#828282',
@@ -258,8 +268,8 @@ const styles = StyleSheet.create({
   imageContainerStyle: {
     height: 76,
     width: 76,
-    marginTop: 10,
     marginLeft: 7,
+    alignSelf: 'center',
   },
   imgStyle: {
     height: null,

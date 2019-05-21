@@ -40,8 +40,12 @@ export default class Category extends Component {
             backgroundColor: 'white',
           }}
         >
-          <Text adjustsFontSizeToFit>{name}</Text>
-          <Text adjustsFontSizeToFit>₱300.00</Text>
+          <Text style={{ color: 'gray' }} adjustsFontSizeToFit numberOfLines={2}>
+            {name}
+          </Text>
+          <Text style={{ color: 'gray' }} adjustsFontSizeToFit numberOfLines={2}>
+            ₱300.00
+          </Text>
         </View>
       </TouchableOpacity>
     );

@@ -51,115 +51,106 @@ export default class MyModal extends Component {
     const month = MONTHARRAY[monthIndex];
     const year = new Date().getFullYear();
     const dateToString = `${month} ${date}, ${year}`;
-    Alert.alert(
-      'Notice',
-      'SugoPH currently operates within Cebu City only. ',
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Yes',
-          onPress: () => {
-            this.setState({ loading: true });
-            if (Platform.OS === 'android') {
-              NetInfo.isConnected.fetch().then(async isConnected => {
-                if (isConnected) {
-                  const { status } = await Permissions.askAsync(Permissions.LOCATION);
-                  if (status === 'granted') {
-                    try {
-                      const location = await Location.getCurrentPositionAsync({});
-                      const { latitude, longitude } = location.coords;
-                      const add = await Location.reverseGeocodeAsync({ longitude, latitude });
-                      const addIndex = add[0];
-                      const { city, street } = addIndex;
-                      const address = `${street}, ${city}`;
-                      const postId = `${timeStamp}${uid}`;
-                      const updates = {};
-                      const metadata = {
-                        address,
-                        timeStamp,
-                        date: dateToString,
-                        status: 'pending',
-                        title: catName,
-                        desc,
-                        price: 300,
-                        timeStarted: '',
-                        timeDone: '',
-                        timeSpent: '',
-                      };
-                      const seeker = {
-                        seekerId: uid,
-                        displayName,
-                        email,
-                        photoURL,
-                        lat: latitude,
-                        long: longitude,
-                        seekerToken: token,
-                        withMessage: 'false',
-                      };
-                      const insertData = {
-                        postId: `${timeStamp}${uid}`,
-                        metadata,
-                        seeker,
-                        runner: 'none',
-                      };
-                      updates[`/posts/${postId}`] = insertData;
-                      updates[`/users/${uid}/currentPost`] = postId;
-                      updates[`/users/${uid}/currentPostStatus`] = 'pending';
-                      await firebase
-                        .database()
-                        .ref()
-                        .update(updates);
-                      const { navigate } = navigation;
-                      this.setState({ loading: false });
-                      this.storePostToLocalStorage(postId);
-                      navigate('SeekerTabNavigator');
-                    } catch (e) {
-                      this.setState({ loading: false });
-                      if (e.code === 'E_LOCATION_SERVICES_DISABLED') {
-                        Alert.alert(
-                          'Location',
-                          'SugoPH wants access to your location services.',
-                          [
-                            { text: 'Do not allow.', style: 'cancel' },
-                            {
-                              text: 'Go to settings.',
-                              onPress: () =>
-                                IntentLauncherAndroid.startActivityAsync(
-                                  IntentLauncherAndroid.ACTION_LOCATION_SOURCE_SETTINGS,
-                                ),
-                            },
-                          ],
-                          { cancelable: false },
-                        );
-                      } else {
-                        Alert.alert(
-                          'Error',
-                          'Please try again. Sorry for having this issue, SugoPH team will look into this as soon as possible.',
-                        );
-                        firebase
-                          .database()
-                          .ref('errors')
-                          .push(e.message);
-                      }
-                    }
-                  } else {
-                    this.setState({ loading: false });
-                    Alert.alert(
-                      'Location',
-                      'To continue, please allow SugoPH to access your location.',
-                    );
-                  }
-                } else {
-                  this.setState({ loading: false });
-                  Alert.alert('Connection Problem.', 'Please check your internet connection');
-                }
-              });
+    if (Platform.OS === 'android') {
+      NetInfo.isConnected.fetch().then(async isConnected => {
+        if (isConnected) {
+          const { status } = await Permissions.askAsync(Permissions.LOCATION);
+          if (status === 'granted') {
+            try {
+              this.setState({ loading: true });
+              const location = await Location.getCurrentPositionAsync({});
+              const { latitude, longitude } = location.coords;
+              const add = await Location.reverseGeocodeAsync({ longitude, latitude });
+              const addIndex = add[0];
+              const { city, street } = addIndex;
+              if (city === 'Cebu City') {
+                const address = `${street}, ${city}`;
+                const postId = `${timeStamp}${uid}`;
+                const updates = {};
+                const metadata = {
+                  address,
+                  timeStamp,
+                  date: dateToString,
+                  status: 'pending',
+                  title: catName,
+                  desc,
+                  price: 300,
+                  timeStarted: '',
+                  timeDone: '',
+                  timeSpent: '',
+                };
+                const seeker = {
+                  seekerId: uid,
+                  displayName,
+                  email,
+                  photoURL,
+                  lat: latitude,
+                  long: longitude,
+                  seekerToken: token,
+                  withMessage: 'false',
+                };
+                const insertData = {
+                  postId: `${timeStamp}${uid}`,
+                  metadata,
+                  seeker,
+                  runner: 'none',
+                };
+                updates[`/posts/${postId}`] = insertData;
+                updates[`/users/${uid}/currentPost`] = postId;
+                updates[`/users/${uid}/currentPostStatus`] = 'pending';
+                await firebase
+                  .database()
+                  .ref()
+                  .update(updates);
+                const { navigate } = navigation;
+                this.setState({ loading: false });
+                this.storePostToLocalStorage(postId);
+                navigate('SeekerTabNavigator');
+              } else {
+                Alert.alert(
+                  `Hi, ${displayName}`,
+                  `Oh no! Something's wrong, please make sure you are within Cebu City and try again.`,
+                );
+              }
+            } catch (e) {
+              this.setState({ loading: false });
+              if (e.code === 'E_LOCATION_SERVICES_DISABLED') {
+                Alert.alert(
+                  'Location',
+                  'SugoPH wants access to your location services.',
+                  [
+                    { text: 'Do not allow.', style: 'cancel' },
+                    {
+                      text: 'Go to settings.',
+                      onPress: () =>
+                        IntentLauncherAndroid.startActivityAsync(
+                          IntentLauncherAndroid.ACTION_LOCATION_SOURCE_SETTINGS,
+                        ),
+                    },
+                  ],
+                  { cancelable: false },
+                );
+              } else {
+                Alert.alert(
+                  'Error',
+                  'Please try again. Sorry for having this issue, SugoPH team will look into this as soon as possible.',
+                );
+                firebase
+                  .database()
+                  .ref('errors')
+                  .push(e.message);
+              }
             }
-          },
-        },
-      ],
-      { cancelable: false },
-    );
+          } else {
+            this.setState({ loading: false });
+            Alert.alert('Location', 'To continue, please allow SugoPH to access your location.');
+          }
+        } else {
+          this.setState({ loading: false });
+          Alert.alert('Connection Problem.', 'Please check your internet connection');
+        }
+      });
+    }
   };
 
   renderButton() {

@@ -132,7 +132,7 @@ export default class PendingPost extends Component {
                 <Text adjustsFontSizeToFit numberOfLines={1} style={{ color: 'gray' }}>
                   {post !== '' ? post.metadata.title : ''}
                 </Text>
-                <Text style={{ fontSize: 36, fontWeight: '500', color: 'gray' }}>{`₱${
+                <Text style={{ fontSize: 36, fontWeight: '400', color: 'gray' }}>{`₱${
                   post.metadata.price
                 }.00`}</Text>
                 <Text

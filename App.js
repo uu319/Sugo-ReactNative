@@ -8,12 +8,22 @@ import {
   AntDesign,
   FontAwesome,
 } from '@expo/vector-icons';
+import { createStore } from 'redux';
+import { Provider } from 'react-redux';
 import SwitchNav from './src/navigators/MainNav';
 import { firebaseConfig } from './src/components/Constants';
 
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
+const initialState = {
+  user: {},
+};
+
+const reducer = (state = initialState) => {
+  return state;
+};
+const store = createStore(reducer);
 
 export default class App extends React.Component {
   state = {
@@ -70,6 +80,7 @@ export default class App extends React.Component {
   render() {
     const { isLoadingComplete } = this.state;
     const { skipLoadingScreen } = this.props;
+
     if (!isLoadingComplete && !skipLoadingScreen) {
       return (
         <AppLoading
@@ -79,6 +90,10 @@ export default class App extends React.Component {
         />
       );
     }
-    return <SwitchNav />;
+    return (
+      <Provider store={store}>
+        <SwitchNav />
+      </Provider>
+    );
   }
 }

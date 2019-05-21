@@ -32,7 +32,7 @@ export default class Categories extends Component {
           <View style={{ flex: 1, flexDirection: 'row' }}>
             <Category
               imageUri={require('../myassets/Document.png')}
-              name="Filing/Claiming of Documents"
+              name="Document Processing"
               onPress={() => onCatPress('Filing/Claiming of Documents')}
             />
             <Category

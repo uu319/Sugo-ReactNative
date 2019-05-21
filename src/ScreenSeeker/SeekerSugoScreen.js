@@ -36,12 +36,8 @@ export default class Sugo extends Component {
   }
 
   componentWillUnmount() {
-    BackHandler.removeEventListener('hardwareBackPress', this.handleBackPress);
+    BackHandler.removeEventListener('hardwareBackPress', this.onBackButtonPressAndroid);
   }
-
-  // _handleNotification = notification => {
-  //   this.setState({ notification });
-  // };
 
   onBackButtonPressAndroid = () => {
     BackHandler.exitApp();

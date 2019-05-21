@@ -36,7 +36,12 @@ export default class RunnerSugoScreen extends Component {
     this.listenUser();
   }
 
+  componentWillUnmount() {
+    BackHandler.removeEventListener('hardwareBackPress', this.onBackButtonPressAndroid);
+  }
+
   onBackButtonPressAndroid = () => {
+    BackHandler.exitApp();
     return true;
   };
 
